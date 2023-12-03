@@ -1,0 +1,25 @@
+base_url = "https://iorvd.github.io"
+title = "iorvd"
+build_search_index = true
+generate_feed = true
+minify_html = true
+
+theme = "apollo"
+
+[markdown]
+highlight_code = true
+highlight_theme = "ayu-dark"
+
+[extra]
+use_cdn = false
+theme = "toggle"
+
+menu = [
+    { name = "/posts", url = "/posts", weight = 1 },
+    { name = "/about", url = "/about", weight = 4 },
+]
+
+socials = [
+    { name = "twitter", url = "https://twitter.com/eorvd_", icon = "twitter" },
+    { name = "github", url = "https://github.com/iorvd/", icon = "github" },
+]
