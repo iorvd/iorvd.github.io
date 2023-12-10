@@ -16,7 +16,8 @@ theme = "toggle"
 
 menu = [
     { name = "/posts", url = "/posts", weight = 1 },
-    { name = "/about", url = "/about", weight = 4 },
+    { name = "/photos", url = "/photos", weight = 2 },
+    { name = "/about", url = "/about", weight = 3 },
 ]
 
 socials = [
