@@ -21,6 +21,5 @@ menu = [
 ]
 
 socials = [
-    { name = "twitter", url = "https://twitter.com/eorvd_", icon = "twitter" },
     { name = "github", url = "https://github.com/iorvd/", icon = "github" },
 ]
