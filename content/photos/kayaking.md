@@ -41,4 +41,5 @@ aliases: ["/kayaking/"]
     <a href="https://live.staticflickr.com/65535/53411261665_82e94c4dbb_k.jpg"></a>
     <a href="https://live.staticflickr.com/65535/53410992723_1f9100e642_k.jpg"></a>
     <a href="https://live.staticflickr.com/65535/53411261640_c203f2b694_k.jpg"></a>
+    <a href="https://live.staticflickr.com/65535/53389019443_afdc09b604_k.jpg" data-ngthumb="https://live.staticflickr.com/65535/53389019443_2bdfe8c901_n.jpg"></a>
 </div>

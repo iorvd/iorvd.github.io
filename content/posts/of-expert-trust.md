@@ -7,7 +7,7 @@ aliases: ["/of-being-an-expert/"]
 When I was a child I was fond of reading criminal stories and detectives. My
 father had an extensive library of e-books by Agatha Christie and I read all
 of them many times. It was a long time ago and many of the plotlines
-perished from my memory, although there's one I remember very well and the one
+vanished from my memory, although there's one I remember very well and the one
 I keep returning to every once in while.
 
 In 1925, Christie published a short novel in The Blue Book Magazine called
@@ -48,7 +48,7 @@ help. Being professional doesn't always mean 'being able to solve all the
 problems', sometimes it's 'being able to solve the problems as fast as possible
 using the available tools and people'.
 
-I remember Tony Faddell in 'Build' said that "be CTO/Tech lead is not about being the
+I remember Tony Fadell in 'Build' said that "be CTO/Tech lead is not about being the
 best engineer in the company/team", which makes sense. It's about being
 able to manage resources you possess in the best possible way, which often
 are teams and people around you.
