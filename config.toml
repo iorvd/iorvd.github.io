@@ -1,10 +1,11 @@
 base_url = "https://iorvd.github.io"
 title = "iorvd"
 build_search_index = true
-generate_feed = true
+generate_feeds = true
 minify_html = true
 
 theme = "apollo"
+compile_sass = true
 
 [markdown]
 highlight_code = true
