@@ -5,6 +5,7 @@ generate_feeds = true
 minify_html = true
 
 theme = "apollo"
+compile_sass = true
 
 [markdown]
 highlight_code = true
