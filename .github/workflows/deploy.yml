@@ -12,9 +12,9 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       
     - name: Build and deploy
-      uses: shalzz/zola-deploy-action@master
+      uses: shalzz/zola-deploy-action@v0.19.2
       env:
         TOKEN: ${{ secrets.TOKEN }}
