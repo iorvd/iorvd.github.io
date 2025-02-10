@@ -140,8 +140,7 @@ function clearButtonHandler() {
     clearTimeout(timer);
 
     let cellsList = document.getElementsByClassName("live");
-    // convert to array first, otherwise, you're working on a live node list
-    // and the update doesn't work!
+
     let cells = [];
     for (let i = 0; i < cellsList.length; i++) {
         cells.push(cellsList[i]);
@@ -165,7 +164,6 @@ function startButtonHandler() {
     }
 }
 
-// run the life game
 function play() {
     computeNextGen();
 
@@ -194,9 +192,7 @@ function computeNextGen() {
         }
     }
 
-    // copy NextGrid to grid, and reset nextGrid
     copyAndResetGrid();
-    // copy all 1 values to "live" in the table
     updateView();
 }
 
