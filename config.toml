@@ -2,6 +2,7 @@ base_url = "https://ogesandr.com"
 title = "iorvd"
 build_search_index = true
 generate_feeds = true
+feed_filenames = ["rss.xml"]
 minify_html = true
 
 theme = "apollo"
@@ -23,4 +24,5 @@ menu = [
 
 socials = [
     { name = "github", url = "https://github.com/iorvd/", icon = "github" },
+    { name = "rss", url = "rss.xml", icon = "rss" },
 ]
