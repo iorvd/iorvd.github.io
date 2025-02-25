@@ -1,5 +1,5 @@
 base_url = "https://ogesandr.com"
-title = "iorvd"
+title = "ogesandr"
 author = "Oleksandr"
 build_search_index = true
 generate_feeds = true
@@ -25,5 +25,5 @@ menu = [
 
 socials = [
     { name = "github", url = "https://github.com/iorvd/", icon = "github" },
-    { name = "rss", url = "rss.xml", icon = "rss" },
+    { name = "rss", url = "/rss.xml", icon = "rss" },
 ]
