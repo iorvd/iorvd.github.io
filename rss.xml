@@ -1,0 +1,918 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0">
+    <channel>
+      <title>ogesandr</title>
+      <link>https://ogesandr.com</link>
+      <description></description>
+      <generator>Zola</generator>
+      <language>en</language>
+      <atom:link href="https://ogesandr.com/rss.xml" rel="self" type="application/rss+xml"/>
+      <lastBuildDate>Sun, 02 Feb 2025 00:00:00 +0000</lastBuildDate>
+      <item>
+          <title>Conway&#x27;s game of life</title>
+          <pubDate>Sun, 02 Feb 2025 00:00:00 +0000</pubDate>
+          <author>Oleksandr</author>
+          <link>https://ogesandr.com/posts/game-of-life/</link>
+          <guid>https://ogesandr.com/posts/game-of-life/</guid>
+          <description xml:base="https://ogesandr.com/posts/game-of-life/">&lt;h1 id=&quot;rules&quot;&gt;Rules&lt;&#x2F;h1&gt;
+&lt;ol&gt;
+&lt;li&gt;Any live cell with fewer than two live neighbours dies, as if by underpopulation.&lt;&#x2F;li&gt;
+&lt;li&gt;Any live cell with two or three live neighbours lives on to the next generation.&lt;&#x2F;li&gt;
+&lt;li&gt;Any live cell with more than three live neighbours dies, as if by overpopulation.&lt;&#x2F;li&gt;
+&lt;li&gt;Any dead cell with exactly three live neighbours becomes a live cell, as if by reproduction.&lt;&#x2F;li&gt;
+&lt;&#x2F;ol&gt;
+&lt;h1 id=&quot;figures&quot;&gt;Figures&lt;&#x2F;h1&gt;
+&lt;p&gt;See examples of &lt;a href=&quot;https:&#x2F;&#x2F;en.wikipedia.org&#x2F;wiki&#x2F;Conway%27s_Game_of_Life#Examples_of_patterns&quot;&gt;basic patterns&lt;&#x2F;a&gt; such as
+still figures, oscillators and gliders.&lt;&#x2F;p&gt;
+&lt;h1 id=&quot;playground&quot;&gt;Playground&lt;&#x2F;h1&gt;
+&lt;link rel=&quot;stylesheet&quot; type=&quot;text&#x2F;css&quot; media=&quot;screen&quot; href=&quot;..&#x2F;..&#x2F;game_of_life.css&quot;&#x2F;&gt;
+&lt;div id=&quot;gridContainer&quot;&gt;
+&lt;&#x2F;div&gt;
+&lt;div class=&quot;controls&quot;&gt;
+&lt;button id=&quot;start&quot;&gt;&lt;span&gt;Start&lt;&#x2F;span&gt;&lt;&#x2F;button&gt;
+&lt;button id=&quot;clear&quot;&gt;&lt;span&gt;Clear&lt;&#x2F;span&gt;&lt;&#x2F;button&gt;
+&lt;&#x2F;div&gt;
+&lt;script&gt;
+
+let dimension = 20;
+
+let playing = false;
+
+let grid = new Array(dimension);
+let nextGrid = new Array(dimension);
+
+let timer;
+let reproductionTime = 100;
+
+function initializeGrids() {
+    for (let i = 0; i &lt; dimension; i++) {
+        grid[i] = new Array(dimension);
+        nextGrid[i] = new Array(dimension);
+    }
+}
+
+function resetGrids() {
+    for (let i = 0; i &lt; dimension; i++) {
+        for (let j = 0; j &lt; dimension; j++) {
+            grid[i][j] = 0;
+            nextGrid[i][j] = 0;
+        }
+    }
+}
+
+function copyAndResetGrid() {
+    for (let i = 0; i &lt; dimension; i++) {
+        for (let j = 0; j &lt; dimension; j++) {
+            grid[i][j] = nextGrid[i][j];
+            nextGrid[i][j] = 0;
+        }
+    }
+}
+
+function initialize() {
+    createTable();
+    initializeGrids();
+    resetGrids();
+    setupControlButtons();
+}
+
+function createTable() {
+    let gridContainer = document.getElementById(&#x27;gridContainer&#x27;);
+    if (!gridContainer) {
+        console.error(&quot;Problem: No div for the grid table!&quot;);
+    }
+
+    let table = document.createElement(&quot;table&quot;);
+
+    for (let i = 0; i &lt; dimension; i++) {
+        let tr = document.createElement(&quot;tr&quot;);
+        for (let j = 0; j &lt; dimension; j++) {
+            let cell = document.createElement(&quot;td&quot;);
+            cell.setAttribute(&quot;id&quot;, i + &quot;_&quot; + j);
+            cell.setAttribute(&quot;class&quot;, &quot;dead&quot;);
+            cell.onclick = cellClickHandler;
+            tr.appendChild(cell);
+        }
+        table.appendChild(tr);
+    }
+    gridContainer.appendChild(table);
+}
+
+function cellClickHandler() {
+    const axes = this.id.split(&quot;_&quot;);
+    const x = axes[0];
+    const y = axes[1];
+
+    let classes = this.getAttribute(&quot;class&quot;);
+    if (classes.indexOf(&quot;live&quot;) &gt; -1) {
+        this.setAttribute(&quot;class&quot;, &quot;dead&quot;);
+        grid[x][y] = 0;
+    } else {
+        this.setAttribute(&quot;class&quot;, &quot;live&quot;);
+        grid[x][y] = 1;
+    }
+}
+
+function updateView() {
+    for (let i = 0; i &lt; dimension; i++) {
+        for (let j = 0; j &lt; dimension; j++) {
+            let cell = document.getElementById(i + &quot;_&quot; + j);
+            if (grid[i][j] === 0) {
+                cell.setAttribute(&quot;class&quot;, &quot;dead&quot;);
+            } else {
+                cell.setAttribute(&quot;class&quot;, &quot;live&quot;);
+            }
+        }
+    }
+}
+
+function setupControlButtons() {
+    let startButton = document.getElementById(&#x27;start&#x27;);
+    startButton.onclick = startButtonHandler;
+
+    let clearButton = document.getElementById(&#x27;clear&#x27;);
+    clearButton.onclick = clearButtonHandler;
+}
+
+function clearButtonHandler() {
+    console.log(&quot;Clear the game: stop playing, clear the grid&quot;);
+
+    playing = false;
+    let startButton = document.getElementById(&#x27;start&#x27;);
+    startButton.innerHTML = &quot;Start&quot;;
+    clearTimeout(timer);
+
+    let cellsList = document.getElementsByClassName(&quot;live&quot;);
+
+    let cells = [];
+    for (let i = 0; i &lt; cellsList.length; i++) {
+        cells.push(cellsList[i]);
+    }
+
+    for (let i = 0; i &lt; cells.length; i++) {
+        cells[i].setAttribute(&quot;class&quot;, &quot;dead&quot;);
+    }
+    resetGrids();
+}
+
+function startButtonHandler() {
+    if (playing) {
+        playing = false;
+        this.innerHTML = &quot;Continue&quot;;
+        clearTimeout(timer);
+    } else {
+        playing = true;
+        this.innerHTML = &quot;Pause&quot;;
+        play();
+    }
+}
+
+function play() {
+    computeNextGen();
+
+    if (playing) {
+        timer = setTimeout(play, reproductionTime);
+    }
+}
+
+function computeNextGen() {
+    for (let x = 0; x &lt; dimension; x++) {
+        for (let y = 0; y &lt; dimension; y++) {
+            const cellsAround = get_live_cells_around(grid, neighbours(x, y, grid.length));
+            const cell = grid[x][y]
+
+            if (cellsAround &lt; 2 &amp;&amp; cell === 1) {
+                nextGrid[x][y] = 0;
+            } else if ((cellsAround === 2 || cellsAround === 3) &amp;&amp; cell === 1) {
+                nextGrid[x][y] = 1;
+            } else if (cellsAround &gt; 3 &amp;&amp; cell === 1) {
+                nextGrid[x][y] = 0;
+            } else if (cellsAround === 3 &amp;&amp; cell === 0) {
+                nextGrid[x][y] = 1;
+            } else {
+                nextGrid[x][y] = 0;
+            }
+        }
+    }
+
+    copyAndResetGrid();
+    updateView();
+}
+
+function get_live_cells_around(grid, neighbors) {
+    let count = 0
+    for (let i = 0; i &lt; neighbors.length; i++) {
+        if (grid[neighbors[i][0]][neighbors[i][1]] !== 0) {
+            count++
+        }
+    }
+    return count
+}
+
+
+function neighbours(x, y, dimension) {
+    let nb = new (Array);
+    let directions = [[-1, -1], [0, -1], [1, -1], [-1, 0], [1, 0], [-1, 1], [0, 1], [1, 1]]
+    for (let i = 0; i &lt; directions.length; i++) {
+        let xoverflow = x + directions[i][0]
+        let yoverflow = y + directions[i][1]
+        if (!(xoverflow &lt; 0 || yoverflow &lt; 0 || xoverflow &gt;= dimension || yoverflow &gt;= dimension)) {
+            nb.push(Array(xoverflow, yoverflow));
+        }
+    }
+
+    return nb;
+}
+
+window.onload = initialize;
+
+&lt;&#x2F;script&gt;
+&lt;p&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;&#x2F;p&gt;
+</description>
+      </item>
+      <item>
+          <title>Updating 300 millions of rows in PostgreSQL</title>
+          <pubDate>Wed, 11 Sep 2024 00:00:00 +0000</pubDate>
+          <author>Oleksandr</author>
+          <link>https://ogesandr.com/posts/how-we-updated-300-million-of-rows-in-postgres/</link>
+          <guid>https://ogesandr.com/posts/how-we-updated-300-million-of-rows-in-postgres/</guid>
+          <description xml:base="https://ogesandr.com/posts/how-we-updated-300-million-of-rows-in-postgres/">&lt;p&gt;[&lt;em&gt;Originally posted at &lt;a href=&quot;https:&#x2F;&#x2F;dou.ua&#x2F;forums&#x2F;topic&#x2F;51676&#x2F;&quot;&gt;DOU.ua&lt;&#x2F;a&gt;&lt;&#x2F;em&gt;]&lt;&#x2F;p&gt;
+&lt;p&gt;This article was written as a retrospective of our experience migrating large amounts of data in PostgreSQL.
+Data migration is a fairly non-trivial task, and as our team discovered, in a resource-limited
+environment &lt;code&gt;UPDATE&lt;&#x2F;code&gt; of data is significantly more complex than &lt;code&gt;INSERT&lt;&#x2F;code&gt; or &lt;code&gt;DELETE&lt;&#x2F;code&gt;. We will
+review the preconditions and kind of data we migrated, the requirements set for the migration,
+explore the approaches we chose, and draw conclusions. This article will primarily
+be useful to those planning to perform large data migrations and those who want to deepen
+their knowledge of PostgreSQL.&lt;&#x2F;p&gt;
+&lt;h1 id=&quot;preconditions&quot;&gt;Preconditions&lt;&#x2F;h1&gt;
+&lt;p&gt;During a major refactoring of one of our services, we noticed some suboptimal data access patterns in
+in our database and decided to optimise them. Worth noting that this was not the only reason why we decided to perform the migration,
+but since this is all that can be revealed publicly, let&#x27;s assume that all the reasons added up in
+a reasonable decision to migrate the data.&lt;&#x2F;p&gt;
+&lt;p&gt;Let&#x27;s look at the example that mimics the behavior we had. There are
+three entities — &lt;code&gt;user&lt;&#x2F;code&gt;, &lt;code&gt;transaction&lt;&#x2F;code&gt;, and &lt;code&gt;transaction_details&lt;&#x2F;code&gt;. The transaction details entity is
+linked to the transaction, and the transaction is linked to the user. So in order to get user data by
+transaction_details.id you first need to get the transaction detais, then get transaction,
+and only then get the data from the user. Our migration updated many fields, but for simplicity, we will consider in the query examples only updating the user_id field in the transaction_details table by transferring its value from the transactions table.&lt;&#x2F;p&gt;
+&lt;p&gt;&lt;img src=&quot;https:&#x2F;&#x2F;s.dou.ua&#x2F;storage-files&#x2F;unnamed_B5Sn67S.png&quot; alt=&quot;ERD&quot; &#x2F;&gt;&lt;&#x2F;p&gt;
+&lt;p&gt;A brief description of what we had and what our migration requirements were:&lt;&#x2F;p&gt;
+&lt;ul&gt;
+&lt;li&gt;The base in which migration was carried out was under constant load and served live traffic ~20rps with ocasional spikes up to 150rps.
+&lt;img src=&quot;https:&#x2F;&#x2F;s.dou.ua&#x2F;storage-files&#x2F;unnamed_PndVs3L.png&quot; alt=&quot;Traffic HTTP&quot; &#x2F;&gt;&lt;&#x2F;li&gt;
+&lt;&#x2F;ul&gt;
+&lt;p style=&quot;text-align: center;&quot;&gt;http traffic database served&lt;&#x2F;p&gt;
+&lt;ul&gt;
+&lt;li&gt;We needed to reduce the load on the database as much as possible to avoid downtime of critical components of the app.
+At the same time we did not have strict restrictions on the migration execution time (provided that this
+did not require the use of engineers&#x27; working time). A faster solution was better for us than an ideal
+solution which would involve more human resources.&lt;&#x2F;li&gt;
+&lt;li&gt;We did not have the opportunity to upgrade and then downgrade the database, but we added the maximum number of provisioned IOPS for our disk.&lt;&#x2F;li&gt;
+&lt;li&gt;The fields that we planned to update (&lt;code&gt;user_id&lt;&#x2F;code&gt;) were immutable in the target-table (&lt;code&gt;transaction_details&lt;&#x2F;code&gt;). And once the row was created, they remained unchanged, so we did not need to worry about data races.&lt;&#x2F;li&gt;
+&lt;li&gt;Zero data loss - we could not, for example, &lt;a href=&quot;https:&#x2F;&#x2F;blog.codacy.com&#x2F;how-to-update-large-tables-in-postgresql&quot;&gt;stop the database&lt;&#x2F;a&gt;,
+migrate the data, and then start database again.&lt;&#x2F;li&gt;
+&lt;&#x2F;ul&gt;
+&lt;h1 id=&quot;preparation&quot;&gt;Preparation&lt;&#x2F;h1&gt;
+&lt;p&gt;First, we started filling the newly created fields with data. This pinned the total number of rows
+across all the tables we needed to update to around 320 million, with the largest table containing
+140 million records. Some of the configurational data we needed was in another database, but since
+the data we needed was immutable, and we were not interested in new records (because they were
+already automatically saturated with the data), in order to speed up the migration we completely
+copied the required table from one database to another.&lt;&#x2F;p&gt;
+&lt;h1 id=&quot;research-on-approaches-to-migration&quot;&gt;Research on approaches to migration&lt;&#x2F;h1&gt;
+&lt;h2 id=&quot;aws-dms&quot;&gt;AWS DMS&lt;&#x2F;h2&gt;
+&lt;p&gt;We use AWS as a cloud provider for our services. One of AWS services is a service for data migration
+between databases — DMS (Data Migration Service). AWS DMS allows you to migrate data between
+homogeneous databases — Full Load and CDC, which consists of copying the main chunk of data in the
+database and then applying all changes that have occurred in the old database via CDC. During this
+migration, you can configure triggers that will modify the data — and as a result, you will get a ready
+copy of the original database, but with all the necessary changes.&lt;&#x2F;p&gt;
+&lt;p&gt;Advantages:&lt;&#x2F;p&gt;
+&lt;ul&gt;
+&lt;li&gt;migration script execution speed.&lt;&#x2F;li&gt;
+&lt;li&gt;if you plan to upgrade your database, you can perform both the upgrade and migration at the same time, saving time.&lt;&#x2F;li&gt;
+&lt;&#x2F;ul&gt;
+&lt;p&gt;Disadvantages:&lt;&#x2F;p&gt;
+&lt;ul&gt;
+&lt;li&gt;all components must be thoroughly tested, as there is a high probability of data loss at any
+migration stage or, conversely, the presence of data after migration that should have been
+deleted in the original table.&lt;&#x2F;li&gt;
+&lt;li&gt;if we want to update the tables in several iterations, then each DMS migration will involve
+a significant amount of infrastructure team engineering resources, which were limited in our situation.&lt;&#x2F;li&gt;
+&lt;li&gt;preparing to migrate all the tables at once is more difficult, since in the event of an error during
+the migration, it will have to be started from the beginning.&lt;&#x2F;li&gt;
+&lt;&#x2F;ul&gt;
+&lt;h2 id=&quot;own-wheen-reinvented-dms&quot;&gt;Own wheen-reinvented DMS&lt;&#x2F;h2&gt;
+&lt;p&gt;If the approach of migrating the main chunk and adding data via CDC works, but there is no need to
+upgrade the database, then why use DMS if you can perform the same operations on the existing database?
+Let&#x27;s consider an example of what such a migration could look like:&lt;&#x2F;p&gt;
+&lt;pre data-lang=&quot;sql&quot; style=&quot;background-color:#0f1419;color:#bfbab0;&quot; class=&quot;language-sql &quot;&gt;&lt;code class=&quot;language-sql&quot; data-lang=&quot;sql&quot;&gt;&lt;span style=&quot;font-style:italic;color:#5c6773;&quot;&gt;-- remember the latest_updated_at;
+&lt;&#x2F;span&gt;&lt;span style=&quot;color:#ff7733;&quot;&gt;SELECT&lt;&#x2F;span&gt;&lt;span&gt; updated_at &lt;&#x2F;span&gt;&lt;span style=&quot;color:#ff7733;&quot;&gt;FROM&lt;&#x2F;span&gt;&lt;span&gt; origin_table &lt;&#x2F;span&gt;&lt;span style=&quot;color:#ff7733;&quot;&gt;ORDER BY&lt;&#x2F;span&gt;&lt;span&gt; updated_at &lt;&#x2F;span&gt;&lt;span style=&quot;color:#ff7733;&quot;&gt;DESC LIMIT &lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29718;&quot;&gt;1&lt;&#x2F;span&gt;&lt;span&gt;;
+&lt;&#x2F;span&gt;&lt;span style=&quot;font-style:italic;color:#5c6773;&quot;&gt;-- copy the table either the following way or via pg_dump&#x2F;pg_restore,
+&lt;&#x2F;span&gt;&lt;span style=&quot;font-style:italic;color:#5c6773;&quot;&gt;-- and enrich the exported data locally;
+&lt;&#x2F;span&gt;&lt;span style=&quot;color:#ff7733;&quot;&gt;CREATE TABLE &lt;&#x2F;span&gt;&lt;span&gt;origin_table_copy &lt;&#x2F;span&gt;&lt;span style=&quot;color:#ffb454;&quot;&gt;FROM&lt;&#x2F;span&gt;&lt;span&gt; (&lt;&#x2F;span&gt;&lt;span style=&quot;color:#ff7733;&quot;&gt;SELECT &lt;&#x2F;span&gt;&lt;span style=&quot;font-style:italic;color:#39bae6;&quot;&gt;* &lt;&#x2F;span&gt;&lt;span style=&quot;color:#ff7733;&quot;&gt;FROM&lt;&#x2F;span&gt;&lt;span&gt; origin_table);
+&lt;&#x2F;span&gt;&lt;span style=&quot;font-style:italic;color:#5c6773;&quot;&gt;-- create index on id;
+&lt;&#x2F;span&gt;&lt;span style=&quot;font-style:italic;color:#5c6773;&quot;&gt;-- create trigger on create&#x2F;update&#x2F;delete, which will write from
+&lt;&#x2F;span&gt;&lt;span style=&quot;font-style:italic;color:#5c6773;&quot;&gt;-- origin_table to origin_table_copy;
+&lt;&#x2F;span&gt;&lt;span style=&quot;font-style:italic;color:#5c6773;&quot;&gt;-- incrementally restore the modified data;
+&lt;&#x2F;span&gt;&lt;span style=&quot;color:#ff7733;&quot;&gt;UPDATE&lt;&#x2F;span&gt;&lt;span&gt; origin_table_copy
+&lt;&#x2F;span&gt;&lt;span style=&quot;color:#ff7733;&quot;&gt;SET&lt;&#x2F;span&gt;&lt;span&gt; x&lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29668;&quot;&gt;=&lt;&#x2F;span&gt;&lt;span&gt;y
+&lt;&#x2F;span&gt;&lt;span style=&quot;color:#ff7733;&quot;&gt;WHERE&lt;&#x2F;span&gt;&lt;span&gt; updated_at &lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29668;&quot;&gt;BETWEEN&lt;&#x2F;span&gt;&lt;span&gt; latest_updated_at
+&lt;&#x2F;span&gt;&lt;span&gt;    &lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29668;&quot;&gt;AND&lt;&#x2F;span&gt;&lt;span&gt; latest_updated_at &lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29668;&quot;&gt;+&lt;&#x2F;span&gt;&lt;span&gt; (&lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29718;&quot;&gt;10 &lt;&#x2F;span&gt;&lt;span style=&quot;font-style:italic;color:#39bae6;&quot;&gt;*&lt;&#x2F;span&gt;&lt;span&gt; interval &lt;&#x2F;span&gt;&lt;span style=&quot;color:#c2d94c;&quot;&gt;&amp;#39;1 minute&amp;#39;&lt;&#x2F;span&gt;&lt;span&gt;);
+&lt;&#x2F;span&gt;&lt;span style=&quot;font-style:italic;color:#5c6773;&quot;&gt;-- restore all the constraints, recreate indexes, restart sequences etc;
+&lt;&#x2F;span&gt;&lt;span style=&quot;font-style:italic;color:#5c6773;&quot;&gt;-- switch traffic between the tables;
+&lt;&#x2F;span&gt;&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;Advantages:&lt;&#x2F;p&gt;
+&lt;ul&gt;
+&lt;li&gt;speed of migration script execution.&lt;&#x2F;li&gt;
+&lt;li&gt;easier to replicate the migration environment, and as a result, easier to test individual components than in DMS&lt;&#x2F;li&gt;
+&lt;li&gt;less involvement of infrastructure engineers&lt;&#x2F;li&gt;
+&lt;li&gt;no problems with individual table migration.&lt;&#x2F;li&gt;
+&lt;&#x2F;ul&gt;
+&lt;p&gt;Disadvantages:&lt;&#x2F;p&gt;
+&lt;ul&gt;
+&lt;li&gt;at the same time, there are significantly more components to test than in DMS.
+Also, the logic of the migration itself is more complex, and accordingly, there
+is more room for a mistake.&lt;&#x2F;li&gt;
+&lt;&#x2F;ul&gt;
+&lt;h2 id=&quot;batch-updates&quot;&gt;Batch updates&lt;&#x2F;h2&gt;
+&lt;p&gt;The idea behind updating data in batches is that it allows for a quick migration
+given the availability of database resources and a well-optimized query. In particular,
+this method is the easiest in terms of mental overhead for engineers, as it is intuitive
+in understanding. And therefore it helps to avoid mistakes.&lt;&#x2F;p&gt;
+&lt;p&gt;Initially, we tried a fairly trivial and straightforward approach — to aggregate all
+the data in one sql transaction and immediately update the target table.&lt;&#x2F;p&gt;
+&lt;pre data-lang=&quot;sql&quot; style=&quot;background-color:#0f1419;color:#bfbab0;&quot; class=&quot;language-sql &quot;&gt;&lt;code class=&quot;language-sql&quot; data-lang=&quot;sql&quot;&gt;&lt;span style=&quot;color:#ff7733;&quot;&gt;CREATE INDEX &lt;&#x2F;span&gt;&lt;span style=&quot;color:#ffb454;&quot;&gt;tx_details_user_id_null_idx
+&lt;&#x2F;span&gt;&lt;span&gt;    ON transaction_details (id)
+&lt;&#x2F;span&gt;&lt;span&gt;    &lt;&#x2F;span&gt;&lt;span style=&quot;color:#ff7733;&quot;&gt;WHERE&lt;&#x2F;span&gt;&lt;span&gt; user_id &lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29668;&quot;&gt;IS &lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29718;&quot;&gt;NULL
+&lt;&#x2F;span&gt;&lt;span&gt;
+&lt;&#x2F;span&gt;&lt;span style=&quot;color:#ff7733;&quot;&gt;UPDATE&lt;&#x2F;span&gt;&lt;span&gt; transaction_details td
+&lt;&#x2F;span&gt;&lt;span style=&quot;color:#ff7733;&quot;&gt;SET&lt;&#x2F;span&gt;&lt;span&gt; user_id &lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29668;&quot;&gt;= &lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29718;&quot;&gt;cte&lt;&#x2F;span&gt;&lt;span&gt;.&lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29718;&quot;&gt;user_id
+&lt;&#x2F;span&gt;&lt;span style=&quot;color:#ff7733;&quot;&gt;FROM&lt;&#x2F;span&gt;&lt;span&gt; (&lt;&#x2F;span&gt;&lt;span style=&quot;color:#ff7733;&quot;&gt;SELECT &lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29718;&quot;&gt;t&lt;&#x2F;span&gt;&lt;span&gt;.&lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29718;&quot;&gt;user_id&lt;&#x2F;span&gt;&lt;span&gt;, &lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29718;&quot;&gt;td&lt;&#x2F;span&gt;&lt;span&gt;.&lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29718;&quot;&gt;id
+&lt;&#x2F;span&gt;&lt;span&gt;      &lt;&#x2F;span&gt;&lt;span style=&quot;color:#ff7733;&quot;&gt;FROM&lt;&#x2F;span&gt;&lt;span&gt; transactions t
+&lt;&#x2F;span&gt;&lt;span&gt;  &lt;&#x2F;span&gt;&lt;span style=&quot;color:#ff7733;&quot;&gt;JOIN&lt;&#x2F;span&gt;&lt;span&gt; transaction_details td ON &lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29718;&quot;&gt;td&lt;&#x2F;span&gt;&lt;span&gt;.&lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29718;&quot;&gt;transaction_id&lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29668;&quot;&gt;=&lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29718;&quot;&gt;t&lt;&#x2F;span&gt;&lt;span&gt;.&lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29718;&quot;&gt;id
+&lt;&#x2F;span&gt;&lt;span&gt;      &lt;&#x2F;span&gt;&lt;span style=&quot;color:#ff7733;&quot;&gt;WHERE &lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29718;&quot;&gt;td&lt;&#x2F;span&gt;&lt;span&gt;.&lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29718;&quot;&gt;user_id &lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29668;&quot;&gt;IS &lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29718;&quot;&gt;NULL
+&lt;&#x2F;span&gt;&lt;span&gt;      &lt;&#x2F;span&gt;&lt;span style=&quot;color:#ff7733;&quot;&gt;LIMIT&lt;&#x2F;span&gt;&lt;span&gt; _limit
+&lt;&#x2F;span&gt;&lt;span&gt;) &lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29668;&quot;&gt;AS&lt;&#x2F;span&gt;&lt;span&gt; cte
+&lt;&#x2F;span&gt;&lt;span style=&quot;color:#ff7733;&quot;&gt;WHERE &lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29718;&quot;&gt;td&lt;&#x2F;span&gt;&lt;span&gt;.&lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29718;&quot;&gt;id &lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29668;&quot;&gt;= &lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29718;&quot;&gt;cte&lt;&#x2F;span&gt;&lt;span&gt;.&lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29718;&quot;&gt;id&lt;&#x2F;span&gt;&lt;span&gt;;
+&lt;&#x2F;span&gt;&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;This worked very slowly, the speed was about 3k rows&#x2F;min. Simple math suggests that at
+this rate, migrating one table would take &lt;strong&gt;~50 days&lt;&#x2F;strong&gt; (assuming we would turn
+the migration off at night). The first problem with the query above is that we waste the
+time JOINing the tables. To avoid this, we created an auxiliary table to which we added
+pre-aggregated data:&lt;&#x2F;p&gt;
+&lt;pre data-lang=&quot;sql&quot; style=&quot;background-color:#0f1419;color:#bfbab0;&quot; class=&quot;language-sql &quot;&gt;&lt;code class=&quot;language-sql&quot; data-lang=&quot;sql&quot;&gt;&lt;span style=&quot;font-style:italic;color:#5c6773;&quot;&gt;-- join all the data we need and put it in a table
+&lt;&#x2F;span&gt;&lt;span style=&quot;color:#ff7733;&quot;&gt;CREATE TABLE &lt;&#x2F;span&gt;&lt;span&gt;tmp &lt;&#x2F;span&gt;&lt;span style=&quot;color:#ffb454;&quot;&gt;AS
+&lt;&#x2F;span&gt;&lt;span style=&quot;color:#ff7733;&quot;&gt;SELECT&lt;&#x2F;span&gt;&lt;span&gt; ROW_NUMBER() OVER() &lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29668;&quot;&gt;AS&lt;&#x2F;span&gt;&lt;span&gt; row_id,
+&lt;&#x2F;span&gt;&lt;span&gt;       &lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29718;&quot;&gt;td&lt;&#x2F;span&gt;&lt;span&gt;.&lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29718;&quot;&gt;id &lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29668;&quot;&gt;AS&lt;&#x2F;span&gt;&lt;span&gt; td_id,
+&lt;&#x2F;span&gt;&lt;span&gt;       &lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29718;&quot;&gt;t&lt;&#x2F;span&gt;&lt;span&gt;.&lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29718;&quot;&gt;id &lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29668;&quot;&gt;AS&lt;&#x2F;span&gt;&lt;span&gt; t_id
+&lt;&#x2F;span&gt;&lt;span style=&quot;color:#ff7733;&quot;&gt;FROM&lt;&#x2F;span&gt;&lt;span&gt; transaction_details td
+&lt;&#x2F;span&gt;&lt;span style=&quot;color:#ff7733;&quot;&gt;JOIN&lt;&#x2F;span&gt;&lt;span&gt; transactions t ON &lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29718;&quot;&gt;td&lt;&#x2F;span&gt;&lt;span&gt;.&lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29718;&quot;&gt;transaction_id &lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29668;&quot;&gt;= &lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29718;&quot;&gt;t&lt;&#x2F;span&gt;&lt;span&gt;.&lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29718;&quot;&gt;id
+&lt;&#x2F;span&gt;&lt;span style=&quot;color:#ff7733;&quot;&gt;WHERE &lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29718;&quot;&gt;td&lt;&#x2F;span&gt;&lt;span&gt;.&lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29718;&quot;&gt;user_id &lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29668;&quot;&gt;IS &lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29718;&quot;&gt;NULL&lt;&#x2F;span&gt;&lt;span&gt;;
+&lt;&#x2F;span&gt;&lt;span&gt;
+&lt;&#x2F;span&gt;&lt;span style=&quot;font-style:italic;color:#5c6773;&quot;&gt;-- adding an index on top of it
+&lt;&#x2F;span&gt;&lt;span style=&quot;color:#ff7733;&quot;&gt;CREATE INDEX &lt;&#x2F;span&gt;&lt;span&gt;tmp_idx ON &lt;&#x2F;span&gt;&lt;span style=&quot;color:#ffb454;&quot;&gt;tmp&lt;&#x2F;span&gt;&lt;span&gt;(row_id);
+&lt;&#x2F;span&gt;&lt;span&gt;
+&lt;&#x2F;span&gt;&lt;span style=&quot;font-style:italic;color:#5c6773;&quot;&gt;-- table with all the data we need
+&lt;&#x2F;span&gt;&lt;span style=&quot;color:#ff7733;&quot;&gt;UPDATE&lt;&#x2F;span&gt;&lt;span&gt; transaction_details td
+&lt;&#x2F;span&gt;&lt;span style=&quot;color:#ff7733;&quot;&gt;SET&lt;&#x2F;span&gt;&lt;span&gt; user_id &lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29668;&quot;&gt;=&lt;&#x2F;span&gt;&lt;span&gt; COALESCE(&lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29718;&quot;&gt;td&lt;&#x2F;span&gt;&lt;span&gt;.&lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29718;&quot;&gt;user_id&lt;&#x2F;span&gt;&lt;span&gt;, &lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29718;&quot;&gt;cte&lt;&#x2F;span&gt;&lt;span&gt;.&lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29718;&quot;&gt;user_id&lt;&#x2F;span&gt;&lt;span&gt;)
+&lt;&#x2F;span&gt;&lt;span style=&quot;color:#ff7733;&quot;&gt;FROM&lt;&#x2F;span&gt;&lt;span&gt; (&lt;&#x2F;span&gt;&lt;span style=&quot;color:#ff7733;&quot;&gt;SELECT&lt;&#x2F;span&gt;&lt;span&gt; user_id,
+&lt;&#x2F;span&gt;&lt;span&gt;             td_id
+&lt;&#x2F;span&gt;&lt;span&gt;      &lt;&#x2F;span&gt;&lt;span style=&quot;color:#ff7733;&quot;&gt;FROM&lt;&#x2F;span&gt;&lt;span&gt; tmp
+&lt;&#x2F;span&gt;&lt;span&gt;      &lt;&#x2F;span&gt;&lt;span style=&quot;color:#ff7733;&quot;&gt;WHERE&lt;&#x2F;span&gt;&lt;span&gt; row_id &lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29668;&quot;&gt;&amp;gt; &lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29718;&quot;&gt;200000 &lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29668;&quot;&gt;AND&lt;&#x2F;span&gt;&lt;span&gt; row_id &lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29668;&quot;&gt;&amp;lt;= &lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29718;&quot;&gt;210000&lt;&#x2F;span&gt;&lt;span&gt;) &lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29668;&quot;&gt;AS&lt;&#x2F;span&gt;&lt;span&gt; cte
+&lt;&#x2F;span&gt;&lt;span style=&quot;color:#ff7733;&quot;&gt;WHERE &lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29718;&quot;&gt;td&lt;&#x2F;span&gt;&lt;span&gt;.&lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29718;&quot;&gt;td_id &lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29668;&quot;&gt;= &lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29718;&quot;&gt;cte&lt;&#x2F;span&gt;&lt;span&gt;.&lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29718;&quot;&gt;td_id&lt;&#x2F;span&gt;&lt;span&gt;;
+&lt;&#x2F;span&gt;&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;The second problem we encountered was less obvious, but no less significant.
+The thing is that the &lt;code&gt;tx_details_user_id_null_idx&lt;&#x2F;code&gt; index does not speed up,
+but in fact slows down UPDATE, since when updating table rows, this index
+also needs to be updated. Thus, the advantages of the fast table reads are
+shadowed by the slow index updates. Therefore, we dropped it. After that the data was updating
+at ~5k rows&#x2F;min rate, but we still were not satisfied with the speed.&lt;&#x2F;p&gt;
+&lt;p&gt;We tried a few more rather bold ideas: vacuuming dead tuples after each iteration (it had almost no effect),
+playing with the postgres settings &lt;code&gt;temp_buffers&lt;&#x2F;code&gt;, &lt;code&gt;work_mem&lt;&#x2F;code&gt;, &lt;code&gt;effective_cache_size&lt;&#x2F;code&gt; (also minimal impact).
+In the end, after several iterations of changes, we came to the final version, the speed of which
+satisfied us &lt;strong&gt;~30k rows&#x2F;min&lt;&#x2F;strong&gt;. Let&#x27;s take a look at how we did it.&lt;&#x2F;p&gt;
+&lt;p&gt;First, we created a table in which we aggregated all the data we need:&lt;&#x2F;p&gt;
+&lt;pre data-lang=&quot;sql&quot; style=&quot;background-color:#0f1419;color:#bfbab0;&quot; class=&quot;language-sql &quot;&gt;&lt;code class=&quot;language-sql&quot; data-lang=&quot;sql&quot;&gt;&lt;span style=&quot;font-style:italic;color:#5c6773;&quot;&gt;-- join all the data we need and put it in a table
+&lt;&#x2F;span&gt;&lt;span style=&quot;color:#ff7733;&quot;&gt;CREATE TABLE &lt;&#x2F;span&gt;&lt;span&gt;tmp &lt;&#x2F;span&gt;&lt;span style=&quot;color:#ffb454;&quot;&gt;AS
+&lt;&#x2F;span&gt;&lt;span style=&quot;color:#ff7733;&quot;&gt;SELECT &lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29718;&quot;&gt;td&lt;&#x2F;span&gt;&lt;span&gt;.&lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29718;&quot;&gt;id         &lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29668;&quot;&gt;AS&lt;&#x2F;span&gt;&lt;span&gt; td_id,
+&lt;&#x2F;span&gt;&lt;span&gt;       &lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29718;&quot;&gt;t&lt;&#x2F;span&gt;&lt;span&gt;.&lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29718;&quot;&gt;user_id         &lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29668;&quot;&gt;AS&lt;&#x2F;span&gt;&lt;span&gt; user_id,
+&lt;&#x2F;span&gt;&lt;span&gt;       &lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29718;&quot;&gt;td&lt;&#x2F;span&gt;&lt;span&gt;.&lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29718;&quot;&gt;updated_at &lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29668;&quot;&gt;AS&lt;&#x2F;span&gt;&lt;span&gt; updated_at
+&lt;&#x2F;span&gt;&lt;span style=&quot;color:#ff7733;&quot;&gt;FROM&lt;&#x2F;span&gt;&lt;span&gt; transaction_details td
+&lt;&#x2F;span&gt;&lt;span style=&quot;color:#ff7733;&quot;&gt;JOIN&lt;&#x2F;span&gt;&lt;span&gt; transactions t ON &lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29718;&quot;&gt;t&lt;&#x2F;span&gt;&lt;span&gt;.&lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29718;&quot;&gt;id &lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29668;&quot;&gt;= &lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29718;&quot;&gt;td&lt;&#x2F;span&gt;&lt;span&gt;.&lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29718;&quot;&gt;transaction_id
+&lt;&#x2F;span&gt;&lt;span style=&quot;color:#ff7733;&quot;&gt;WHERE &lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29718;&quot;&gt;td&lt;&#x2F;span&gt;&lt;span&gt;.&lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29718;&quot;&gt;user_id &lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29668;&quot;&gt;IS &lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29718;&quot;&gt;NULL&lt;&#x2F;span&gt;&lt;span&gt;;
+&lt;&#x2F;span&gt;&lt;span&gt;
+&lt;&#x2F;span&gt;&lt;span style=&quot;font-style:italic;color:#5c6773;&quot;&gt;-- create an index to read fast first N records and the delete them
+&lt;&#x2F;span&gt;&lt;span style=&quot;color:#ff7733;&quot;&gt;CREATE INDEX &lt;&#x2F;span&gt;&lt;span&gt;tmp_idx ON &lt;&#x2F;span&gt;&lt;span style=&quot;color:#ffb454;&quot;&gt;tmp&lt;&#x2F;span&gt;&lt;span&gt; (updated_at, td_id) INCLUDE (user_id)
+&lt;&#x2F;span&gt;&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;We found that an important aspect is sorting the index by updated_at. When updating data,
+our ideal scenario is to read all the data from the tables that will be updated
+in the same order in which they reside on disk. This allows us to reduce the read overhead on it.
+In PostgreSQL, the &lt;code&gt;UPDATE&lt;&#x2F;code&gt; operation is &lt;code&gt;INSERT+DELETE&lt;&#x2F;code&gt;, so when updating a row, its new versions
+can be written to a different memory region than the current one. As a result, the probability that
+rows with close &lt;code&gt;updated_at&lt;&#x2F;code&gt; values ​​are close to each other is higher than any two arbitrary
+rows sorted by UUID.&lt;&#x2F;p&gt;
+&lt;p&gt;It is worth noting that this should be &lt;code&gt;updated_at&lt;&#x2F;code&gt;, not &lt;code&gt;created_at&lt;&#x2F;code&gt;. If the table &lt;a href=&quot;https:&#x2F;&#x2F;www.postgresql.org&#x2F;docs&#x2F;16&#x2F;sql-createtable.html#RELOPTION-FILLFACTOR&quot;&gt;fillfactor&lt;&#x2F;a&gt; is
+100% (the default value), then data updates with a high probability will be put on another table page,
+and the adjacent data risks be put far from each other after creation. We also tried sorting by
+ctid, but, strangely enough, it turned out to be much slower compared with updated_at.&lt;&#x2F;p&gt;
+&lt;p&gt;When data is updated, indexes that reference the old version of that data are also updated.
+Therefore, it is a good idea to drop as many &lt;a href=&quot;https:&#x2F;&#x2F;www.postgresql.org&#x2F;docs&#x2F;16&#x2F;indexes-intro.html&quot;&gt;indexes&lt;&#x2F;a&gt; of the updated table as possible
+and recreate them after the migration. We have observed ~10%-30% improvement in the speed of &lt;code&gt;UPDATE&lt;&#x2F;code&gt;
+operations after removing several large unused indexes.&lt;&#x2F;p&gt;
+&lt;p&gt;For example, the query execution speed on a database clone with and without any indexes:&lt;&#x2F;p&gt;
+ &lt;table&gt;
+  &lt;tr&gt;
+    &lt;th&gt;&lt;&#x2F;th&gt;
+    &lt;th&gt;With indexes&lt;&#x2F;th&gt;
+    &lt;th&gt;W&#x2F;o indexes&lt;&#x2F;th&gt;
+  &lt;&#x2F;tr&gt;
+  &lt;tr&gt;
+    &lt;td&gt;Batch size 1000&lt;&#x2F;td&gt;
+    &lt;td&gt;36 000&lt;&#x2F;td&gt;
+    &lt;td&gt;111 000&lt;&#x2F;td&gt;
+  &lt;&#x2F;tr&gt;
+&lt;&#x2F;table&gt;
+&lt;p&gt;To reduce the overhead of updates, MVCC might use &lt;a href=&quot;https:&#x2F;&#x2F;www.postgresql.org&#x2F;docs&#x2F;16&#x2F;storage-hot.html&quot;&gt;HOT&lt;&#x2F;a&gt; (Heap-Only-Tuples) optimization,
+but in order for it to happen the update must meet certain conditions:&lt;&#x2F;p&gt;
+&lt;ul&gt;
+&lt;li&gt;the update does not modify columns used in table indexes.&lt;&#x2F;li&gt;
+&lt;li&gt;there is enough space on the table page that contains the old version of the row to fit the new version.&lt;&#x2F;li&gt;
+&lt;&#x2F;ul&gt;
+&lt;p&gt;And the second bullet above is the responsibility of the fillfactor - so if update-heavy workload dominates for a table
+it is worth thinking about creating tables with a fillfactor &amp;lt;70-90%. This will improve
+the speed of data updates during any migration as well.&lt;&#x2F;p&gt;
+&lt;p&gt;At the end, our migration looked like this:&lt;&#x2F;p&gt;
+&lt;pre data-lang=&quot;sql&quot; style=&quot;background-color:#0f1419;color:#bfbab0;&quot; class=&quot;language-sql &quot;&gt;&lt;code class=&quot;language-sql&quot; data-lang=&quot;sql&quot;&gt;&lt;span&gt;DO $$
+&lt;&#x2F;span&gt;&lt;span&gt;    DECLARE
+&lt;&#x2F;span&gt;&lt;span&gt;        _id &lt;&#x2F;span&gt;&lt;span style=&quot;color:#ff7733;&quot;&gt;int&lt;&#x2F;span&gt;&lt;span&gt; :&lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29668;&quot;&gt;= &lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29718;&quot;&gt;0&lt;&#x2F;span&gt;&lt;span&gt;;
+&lt;&#x2F;span&gt;&lt;span&gt;        _rowsLimit &lt;&#x2F;span&gt;&lt;span style=&quot;color:#ff7733;&quot;&gt;INT&lt;&#x2F;span&gt;&lt;span&gt; :&lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29668;&quot;&gt;= &lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29718;&quot;&gt;3000&lt;&#x2F;span&gt;&lt;span&gt;;
+&lt;&#x2F;span&gt;&lt;span&gt;        _updatedTotal &lt;&#x2F;span&gt;&lt;span style=&quot;color:#ff7733;&quot;&gt;INT&lt;&#x2F;span&gt;&lt;span&gt; :&lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29668;&quot;&gt;= &lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29718;&quot;&gt;0&lt;&#x2F;span&gt;&lt;span&gt;;
+&lt;&#x2F;span&gt;&lt;span&gt;        _updatedInBatch &lt;&#x2F;span&gt;&lt;span style=&quot;color:#ff7733;&quot;&gt;INT&lt;&#x2F;span&gt;&lt;span&gt;;
+&lt;&#x2F;span&gt;&lt;span&gt;        start_time &lt;&#x2F;span&gt;&lt;span style=&quot;color:#ff7733;&quot;&gt;timestamp&lt;&#x2F;span&gt;&lt;span&gt; :&lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29668;&quot;&gt;=&lt;&#x2F;span&gt;&lt;span&gt; CLOCK_TIMESTAMP();
+&lt;&#x2F;span&gt;&lt;span&gt;        update_time &lt;&#x2F;span&gt;&lt;span style=&quot;color:#ff7733;&quot;&gt;INT&lt;&#x2F;span&gt;&lt;span&gt;;
+&lt;&#x2F;span&gt;&lt;span&gt;        execution_time &lt;&#x2F;span&gt;&lt;span style=&quot;color:#ff7733;&quot;&gt;INT&lt;&#x2F;span&gt;&lt;span&gt;;
+&lt;&#x2F;span&gt;&lt;span&gt;    &lt;&#x2F;span&gt;&lt;span style=&quot;color:#ff7733;&quot;&gt;BEGIN
+&lt;&#x2F;span&gt;&lt;span&gt;        &lt;&#x2F;span&gt;&lt;span style=&quot;font-style:italic;color:#5c6773;&quot;&gt;-- this setting is needed to turn off the trigger on the target table
+&lt;&#x2F;span&gt;&lt;span&gt;        &lt;&#x2F;span&gt;&lt;span style=&quot;color:#ff7733;&quot;&gt;SET&lt;&#x2F;span&gt;&lt;span&gt; session_replication_role&lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29668;&quot;&gt;=&lt;&#x2F;span&gt;&lt;span style=&quot;color:#c2d94c;&quot;&gt;&amp;#39;replica&amp;#39;&lt;&#x2F;span&gt;&lt;span&gt;;
+&lt;&#x2F;span&gt;&lt;span&gt;
+&lt;&#x2F;span&gt;&lt;span&gt;        LOOP
+&lt;&#x2F;span&gt;&lt;span&gt;            RAISE NOTICE &lt;&#x2F;span&gt;&lt;span style=&quot;color:#c2d94c;&quot;&gt;&amp;#39;Started Iteration: %&amp;#39;&lt;&#x2F;span&gt;&lt;span&gt;, _id;
+&lt;&#x2F;span&gt;&lt;span&gt;            &lt;&#x2F;span&gt;&lt;span style=&quot;font-style:italic;color:#5c6773;&quot;&gt;-- these rows from cte could be written into a variable and later
+&lt;&#x2F;span&gt;&lt;span&gt;            &lt;&#x2F;span&gt;&lt;span style=&quot;font-style:italic;color:#5c6773;&quot;&gt;-- reused for delete-operation, but we didn&amp;#39;t think of it at the time,
+&lt;&#x2F;span&gt;&lt;span&gt;            &lt;&#x2F;span&gt;&lt;span style=&quot;font-style:italic;color:#5c6773;&quot;&gt;-- because delete was not our bottleneck even remotely.
+&lt;&#x2F;span&gt;&lt;span&gt;            &lt;&#x2F;span&gt;&lt;span style=&quot;color:#ff7733;&quot;&gt;WITH&lt;&#x2F;span&gt;&lt;span&gt; cte &lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29668;&quot;&gt;AS&lt;&#x2F;span&gt;&lt;span&gt; (&lt;&#x2F;span&gt;&lt;span style=&quot;color:#ff7733;&quot;&gt;SELECT&lt;&#x2F;span&gt;&lt;span&gt; td_id, user_id
+&lt;&#x2F;span&gt;&lt;span&gt;                         &lt;&#x2F;span&gt;&lt;span style=&quot;color:#ff7733;&quot;&gt;FROM&lt;&#x2F;span&gt;&lt;span&gt; tmp
+&lt;&#x2F;span&gt;&lt;span&gt;                         &lt;&#x2F;span&gt;&lt;span style=&quot;color:#ff7733;&quot;&gt;ORDER BY&lt;&#x2F;span&gt;&lt;span&gt; updated_at
+&lt;&#x2F;span&gt;&lt;span&gt;                         &lt;&#x2F;span&gt;&lt;span style=&quot;color:#ff7733;&quot;&gt;LIMIT&lt;&#x2F;span&gt;&lt;span&gt; _rowsLimit
+&lt;&#x2F;span&gt;&lt;span&gt;            )
+&lt;&#x2F;span&gt;&lt;span&gt;            &lt;&#x2F;span&gt;&lt;span style=&quot;color:#ff7733;&quot;&gt;UPDATE&lt;&#x2F;span&gt;&lt;span&gt; transaction_details td
+&lt;&#x2F;span&gt;&lt;span&gt;            &lt;&#x2F;span&gt;&lt;span style=&quot;color:#ff7733;&quot;&gt;SET&lt;&#x2F;span&gt;&lt;span&gt; user_id &lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29668;&quot;&gt;=&lt;&#x2F;span&gt;&lt;span&gt; COALESCE(&lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29718;&quot;&gt;td&lt;&#x2F;span&gt;&lt;span&gt;.&lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29718;&quot;&gt;user_id&lt;&#x2F;span&gt;&lt;span&gt;, &lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29718;&quot;&gt;cte&lt;&#x2F;span&gt;&lt;span&gt;.&lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29718;&quot;&gt;user_id&lt;&#x2F;span&gt;&lt;span&gt;)
+&lt;&#x2F;span&gt;&lt;span&gt;            &lt;&#x2F;span&gt;&lt;span style=&quot;color:#ff7733;&quot;&gt;FROM&lt;&#x2F;span&gt;&lt;span&gt; cte
+&lt;&#x2F;span&gt;&lt;span&gt;            &lt;&#x2F;span&gt;&lt;span style=&quot;color:#ff7733;&quot;&gt;WHERE &lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29718;&quot;&gt;td&lt;&#x2F;span&gt;&lt;span&gt;.&lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29718;&quot;&gt;id &lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29668;&quot;&gt;= &lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29718;&quot;&gt;cte&lt;&#x2F;span&gt;&lt;span&gt;.&lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29718;&quot;&gt;td_id&lt;&#x2F;span&gt;&lt;span&gt;;
+&lt;&#x2F;span&gt;&lt;span&gt;
+&lt;&#x2F;span&gt;&lt;span&gt;            &lt;&#x2F;span&gt;&lt;span style=&quot;color:#ff7733;&quot;&gt;COMMIT&lt;&#x2F;span&gt;&lt;span&gt;;
+&lt;&#x2F;span&gt;&lt;span&gt;
+&lt;&#x2F;span&gt;&lt;span&gt;            GET DIAGNOSTICS _updatedInBatch &lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29668;&quot;&gt;=&lt;&#x2F;span&gt;&lt;span&gt; ROW_COUNT;
+&lt;&#x2F;span&gt;&lt;span&gt;            _updatedTotal :&lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29668;&quot;&gt;=&lt;&#x2F;span&gt;&lt;span&gt; _updatedTotal &lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29668;&quot;&gt;+&lt;&#x2F;span&gt;&lt;span&gt; _updatedInBatch;
+&lt;&#x2F;span&gt;&lt;span&gt;            update_time :&lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29668;&quot;&gt;=&lt;&#x2F;span&gt;&lt;span&gt; EXTRACT(EPOCH &lt;&#x2F;span&gt;&lt;span style=&quot;color:#ff7733;&quot;&gt;FROM&lt;&#x2F;span&gt;&lt;span&gt; clock_timestamp() &lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29668;&quot;&gt;-&lt;&#x2F;span&gt;&lt;span&gt; start_time);
+&lt;&#x2F;span&gt;&lt;span&gt;            RAISE NOTICE &lt;&#x2F;span&gt;&lt;span style=&quot;color:#c2d94c;&quot;&gt;&amp;#39;UPDATE executed time: % sec.&amp;#39;&lt;&#x2F;span&gt;&lt;span&gt;, update_time;
+&lt;&#x2F;span&gt;&lt;span&gt;
+&lt;&#x2F;span&gt;&lt;span&gt;            &lt;&#x2F;span&gt;&lt;span style=&quot;color:#ff7733;&quot;&gt;WITH&lt;&#x2F;span&gt;&lt;span&gt; cte &lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29668;&quot;&gt;AS&lt;&#x2F;span&gt;&lt;span&gt; (&lt;&#x2F;span&gt;&lt;span style=&quot;color:#ff7733;&quot;&gt;SELECT&lt;&#x2F;span&gt;&lt;span&gt; td_id, updated_at
+&lt;&#x2F;span&gt;&lt;span&gt;                         &lt;&#x2F;span&gt;&lt;span style=&quot;color:#ff7733;&quot;&gt;FROM&lt;&#x2F;span&gt;&lt;span&gt; tmp
+&lt;&#x2F;span&gt;&lt;span&gt;                         &lt;&#x2F;span&gt;&lt;span style=&quot;color:#ff7733;&quot;&gt;ORDER BY&lt;&#x2F;span&gt;&lt;span&gt; updated_at
+&lt;&#x2F;span&gt;&lt;span&gt;                         &lt;&#x2F;span&gt;&lt;span style=&quot;color:#ff7733;&quot;&gt;LIMIT&lt;&#x2F;span&gt;&lt;span&gt; _rowsLimit
+&lt;&#x2F;span&gt;&lt;span&gt;            )
+&lt;&#x2F;span&gt;&lt;span&gt;            &lt;&#x2F;span&gt;&lt;span style=&quot;color:#ff7733;&quot;&gt;DELETE FROM&lt;&#x2F;span&gt;&lt;span&gt; tmp t
+&lt;&#x2F;span&gt;&lt;span&gt;                &lt;&#x2F;span&gt;&lt;span style=&quot;color:#ff7733;&quot;&gt;USING&lt;&#x2F;span&gt;&lt;span&gt; cte
+&lt;&#x2F;span&gt;&lt;span&gt;            &lt;&#x2F;span&gt;&lt;span style=&quot;font-style:italic;color:#5c6773;&quot;&gt;-- comparing `updated_at` is needed to force the query planner
+&lt;&#x2F;span&gt;&lt;span&gt;            &lt;&#x2F;span&gt;&lt;span style=&quot;font-style:italic;color:#5c6773;&quot;&gt;-- to use the index.
+&lt;&#x2F;span&gt;&lt;span&gt;            &lt;&#x2F;span&gt;&lt;span style=&quot;color:#ff7733;&quot;&gt;WHERE &lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29718;&quot;&gt;t&lt;&#x2F;span&gt;&lt;span&gt;.&lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29718;&quot;&gt;updated_at &lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29668;&quot;&gt;= &lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29718;&quot;&gt;cte&lt;&#x2F;span&gt;&lt;span&gt;.&lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29718;&quot;&gt;updated_at
+&lt;&#x2F;span&gt;&lt;span&gt;              &lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29668;&quot;&gt;AND &lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29718;&quot;&gt;t&lt;&#x2F;span&gt;&lt;span&gt;.&lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29718;&quot;&gt;td_id &lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29668;&quot;&gt;= &lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29718;&quot;&gt;cte&lt;&#x2F;span&gt;&lt;span&gt;.&lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29718;&quot;&gt;td_id&lt;&#x2F;span&gt;&lt;span&gt;;
+&lt;&#x2F;span&gt;&lt;span&gt;
+&lt;&#x2F;span&gt;&lt;span&gt;            execution_time :&lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29668;&quot;&gt;=&lt;&#x2F;span&gt;&lt;span&gt; EXTRACT(EPOCH &lt;&#x2F;span&gt;&lt;span style=&quot;color:#ff7733;&quot;&gt;FROM&lt;&#x2F;span&gt;&lt;span&gt; clock_timestamp() &lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29668;&quot;&gt;-&lt;&#x2F;span&gt;&lt;span&gt; start_time);
+&lt;&#x2F;span&gt;&lt;span&gt;            RAISE NOTICE &lt;&#x2F;span&gt;&lt;span style=&quot;color:#c2d94c;&quot;&gt;&amp;#39;Finished Iteration: %, updated total: %, ALL time: % sec.&amp;#39;&lt;&#x2F;span&gt;&lt;span&gt;, _id, _updatedTotal, execution_time;
+&lt;&#x2F;span&gt;&lt;span&gt;
+&lt;&#x2F;span&gt;&lt;span&gt;            &lt;&#x2F;span&gt;&lt;span style=&quot;color:#ff7733;&quot;&gt;COMMIT&lt;&#x2F;span&gt;&lt;span&gt;;
+&lt;&#x2F;span&gt;&lt;span&gt;
+&lt;&#x2F;span&gt;&lt;span&gt;            IF _updatedInBatch &lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29668;&quot;&gt;=&lt;&#x2F;span&gt;&lt;span&gt; _rowsLimit &lt;&#x2F;span&gt;&lt;span style=&quot;color:#ff7733;&quot;&gt;THEN
+&lt;&#x2F;span&gt;&lt;span&gt;                PERFORM pg_sleep(&lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29718;&quot;&gt;0&lt;&#x2F;span&gt;&lt;span&gt;.&lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29718;&quot;&gt;5&lt;&#x2F;span&gt;&lt;span&gt;);
+&lt;&#x2F;span&gt;&lt;span&gt;            &lt;&#x2F;span&gt;&lt;span style=&quot;color:#ff7733;&quot;&gt;ELSE
+&lt;&#x2F;span&gt;&lt;span&gt;                RAISE NOTICE &lt;&#x2F;span&gt;&lt;span style=&quot;color:#c2d94c;&quot;&gt;&amp;#39;All IDs were updated. Exit.&amp;#39;&lt;&#x2F;span&gt;&lt;span&gt;;
+&lt;&#x2F;span&gt;&lt;span&gt;                EXIT;
+&lt;&#x2F;span&gt;&lt;span&gt;            &lt;&#x2F;span&gt;&lt;span style=&quot;color:#ff7733;&quot;&gt;END&lt;&#x2F;span&gt;&lt;span&gt; IF;
+&lt;&#x2F;span&gt;&lt;span&gt;
+&lt;&#x2F;span&gt;&lt;span&gt;            _id :&lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29668;&quot;&gt;=&lt;&#x2F;span&gt;&lt;span&gt; _id&lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29668;&quot;&gt;+&lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29718;&quot;&gt;1&lt;&#x2F;span&gt;&lt;span&gt;;
+&lt;&#x2F;span&gt;&lt;span&gt;        &lt;&#x2F;span&gt;&lt;span style=&quot;color:#ff7733;&quot;&gt;END&lt;&#x2F;span&gt;&lt;span&gt; LOOP;
+&lt;&#x2F;span&gt;&lt;span&gt;    &lt;&#x2F;span&gt;&lt;span style=&quot;color:#ff7733;&quot;&gt;END&lt;&#x2F;span&gt;&lt;span&gt; $$;
+&lt;&#x2F;span&gt;&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;h1 id=&quot;testing&quot;&gt;Testing&lt;&#x2F;h1&gt;
+&lt;p&gt;The query planner takes into account the state of the table and the database,
+so any query analysis should be performed on real data in the production database.
+Since there is always a risk of breaking something in production, we spinned up
+a clone of our production database and performed all hypothesis testing on it.&lt;&#x2F;p&gt;
+&lt;p&gt;Additionally, we tested the migration segments via functional tests to make sure
+that they do exactly what we want them to do. Before executing the migration in production,
+we ran it in our test environments and verified that the data was migrated correctly.&lt;&#x2F;p&gt;
+&lt;h1 id=&quot;monitoring-and-performance-tuning&quot;&gt;Monitoring and performance tuning&lt;&#x2F;h1&gt;
+&lt;p&gt;When writing and executing migration, it is important to remember about domain-specific data access patterns.&lt;&#x2F;p&gt;
+&lt;ul&gt;
+&lt;li&gt;Are traffic spikes typical for services that work with the database? If so, you should consider reducing the speed of data migration.&lt;&#x2F;li&gt;
+&lt;li&gt;Are there data synchronizations that create additional load on the database at night? Perhaps it is worth disabling migration at night.&lt;&#x2F;li&gt;
+&lt;li&gt;How and when is data unloading for DWH or cache and can migration affect it? We had some CDC logic built on triggers - we had to disable it so as not to burden the services that use it (about 20 million rows were updated every day).&lt;&#x2F;li&gt;
+&lt;li&gt;How long will it take to update one batch? Since thousands of values ​are being updated ​in the batch, each row will be locked with &lt;code&gt;FOR UPDATE&lt;&#x2F;code&gt; lock. Can this negatively affect other concurrent queries?&lt;&#x2F;li&gt;
+&lt;li&gt;Are there any entities that use the database&#x2F;table, the downtime of which directly affects the company&#x27;s revenue? For us, such entities were endpoints that are responsible for conducting payments. During migration, it is important to identify such sensitive places and monitor whether requests are not falling due to timeout.&lt;&#x2F;li&gt;
+&lt;li&gt;Who and how monitors the migration process and who sits near the kill switch script in case of an incident threat?&lt;&#x2F;li&gt;
+&lt;li&gt;After migration, a significant number of dead tuples will be created and it is a good practice to clean them up using VACUUM ANALYZE.&lt;&#x2F;li&gt;
+&lt;&#x2F;ul&gt;
+&lt;h1 id=&quot;conclusions&quot;&gt;Conclusions&lt;&#x2F;h1&gt;
+&lt;p&gt;Over time, you may need to re-saturate old data with new data or reshape the structure of tables, but as your database grows,
+this task becomes increasingly non-trivial. Increased query latency, disk degradation,
+data loss&#x2F;data races — all of these problems appear to engineers in a new light
+when it comes to large amounts of data, and performing routine manipulations requires
+increasingly creative approaches and more time for preparation.&lt;&#x2F;p&gt;
+&lt;p&gt;It is important to conduct more thorough and meticulous research on how you plan
+to perform the migration — from what script you will run to what metrics you will be
+able to look at if services dependent on the database begin to degrade.&lt;&#x2F;p&gt;
+</description>
+      </item>
+      <item>
+          <title>Of being an expert</title>
+          <pubDate>Wed, 20 Dec 2023 00:00:00 +0000</pubDate>
+          <author>Oleksandr</author>
+          <link>https://ogesandr.com/posts/of-expert-trust/</link>
+          <guid>https://ogesandr.com/posts/of-expert-trust/</guid>
+          <description xml:base="https://ogesandr.com/posts/of-expert-trust/">&lt;p&gt;When I was a child I was fond of reading criminal stories and detectives. My
+father had an extensive library of e-books by Agatha Christie and I read all
+of them many times. It was a long time ago and many of the plotlines
+vanished from my memory, although there&#x27;s one I remember very well and the one
+I keep returning to every once in while.&lt;&#x2F;p&gt;
+&lt;p&gt;In 1925, Christie published a short novel in The Blue Book Magazine called
+&quot;The Missing Will&quot;. It&#x27;s indeed quite short and you can familarise yourself
+with it &lt;a href=&quot;https:&#x2F;&#x2F;www.gutenberg.org&#x2F;cache&#x2F;epub&#x2F;67173&#x2F;pg67173-images.html&quot;&gt;here&lt;&#x2F;a&gt;.
+The story begins with a young lady asking Poirot to investigate the case.
+Her uncle dies, and since he was sceptical about the women education, he leaves
+the last will saying that unless his niece proves &#x27;her wits&#x27; his property and
+all the money will go to charity. The woman hires Poirot, who (of course)
+solves the mystery, finding another 2nd will written in invisible ink. And at
+the end Hastings and Poirot have an argument:&lt;&#x2F;p&gt;
+&lt;pre style=&quot;background-color:#0f1419;color:#bfbab0;&quot;&gt;&lt;code&gt;&lt;span&gt;Poirot: “As far as I know, there is no law against writing your will in a blend of
+&lt;&#x2F;span&gt;&lt;span&gt;disappearing and sympathetic ink. The intention of the testator is clear,
+&lt;&#x2F;span&gt;&lt;span&gt;and the beneficiary is his only living relation. But the cleverness of him!
+&lt;&#x2F;span&gt;&lt;span&gt;He foresaw every step that a searcher would take, that I, miserable imbecile,
+&lt;&#x2F;span&gt;&lt;span&gt;took! He gets two will-forms, makes the servants sign twice, then sallies out
+&lt;&#x2F;span&gt;&lt;span&gt;with his will written on the inside of a dirty envelope, and a fountain pen
+&lt;&#x2F;span&gt;&lt;span&gt;containing his little ink-mixture. On some excuse he gets the confectioner and
+&lt;&#x2F;span&gt;&lt;span&gt;his wife to sign their names under his own signature; then he ties it to the key
+&lt;&#x2F;span&gt;&lt;span&gt;of his desk and chuckles to himself. If his niece sees through his little ruse,
+&lt;&#x2F;span&gt;&lt;span&gt;she will have justified her choice of life and elaborate education and be
+&lt;&#x2F;span&gt;&lt;span&gt;thoroughly welcome to his money.”
+&lt;&#x2F;span&gt;&lt;span&gt;
+&lt;&#x2F;span&gt;&lt;span&gt;“She didn’t see through it, did she?” I said slowly. “It seems rather unfair.
+&lt;&#x2F;span&gt;&lt;span&gt;The old man really won.”
+&lt;&#x2F;span&gt;&lt;span&gt;
+&lt;&#x2F;span&gt;&lt;span&gt;“But no, Hastings! It is your wits that go astray. Miss Marsh proved the astuteness
+&lt;&#x2F;span&gt;&lt;span&gt;of her wits and the value of the higher education for women by at once putting
+&lt;&#x2F;span&gt;&lt;span&gt;the matter in my hands. Always employ the expert! She has amply proved her right
+&lt;&#x2F;span&gt;&lt;span&gt;to the money.”
+&lt;&#x2F;span&gt;&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;And that thought resonates soo well in my mind. The right person might solve
+the problem 50x time faster than you, sometimes all it takes is to ask for
+help. Being professional doesn&#x27;t always mean &#x27;being able to solve all the
+problems&#x27;, sometimes it&#x27;s &#x27;being able to solve the problems as fast as possible
+using the available tools and people&#x27;.&lt;&#x2F;p&gt;
+&lt;p&gt;I remember Tony Fadell in &#x27;Build&#x27; said that &quot;be CTO&#x2F;Tech lead is not about being the
+best engineer in the company&#x2F;team&quot;, which makes sense. It&#x27;s about being
+able to manage resources you possess in the best possible way, which often
+are teams and people around you.&lt;&#x2F;p&gt;
+</description>
+      </item>
+      <item>
+          <title>Kayaking</title>
+          <pubDate>Sun, 10 Dec 2023 00:00:00 +0000</pubDate>
+          <author>Oleksandr</author>
+          <link>https://ogesandr.com/photos/kayaking/</link>
+          <guid>https://ogesandr.com/photos/kayaking/</guid>
+          <description xml:base="https://ogesandr.com/photos/kayaking/">&lt;div class=&quot;gallery&quot;&gt;
+    &lt;a href=&quot;https:&#x2F;&#x2F;live.staticflickr.com&#x2F;65535&#x2F;53162217160_e59fdf8baf_k.jpg&quot; data-ngthumb=&quot;https:&#x2F;&#x2F;live.staticflickr.com&#x2F;65535&#x2F;53162217160_e59fdf8baf_k.jpg&quot;&gt;&lt;&#x2F;a&gt;
+    &lt;a href=&quot;https:&#x2F;&#x2F;live.staticflickr.com&#x2F;65535&#x2F;53161996869_a06f9b5271_k.jpg&quot; data-ngthumb=&quot;https:&#x2F;&#x2F;live.staticflickr.com&#x2F;65535&#x2F;53161996869_a06f9b5271_k.jpg&quot;&gt;&lt;&#x2F;a&gt;
+    &lt;a href=&quot;https:&#x2F;&#x2F;live.staticflickr.com&#x2F;65535&#x2F;53161204952_2aee5a4ffe_k.jpg&quot; data-ngthumb=&quot;https:&#x2F;&#x2F;live.staticflickr.com&#x2F;65535&#x2F;53161204952_2aee5a4ffe_k.jpg&quot;&gt;&lt;&#x2F;a&gt;
+    &lt;a href=&quot;https:&#x2F;&#x2F;live.staticflickr.com&#x2F;65535&#x2F;53162241430_d5604054ad_k.jpg&quot; data-ngthumb=&quot;https:&#x2F;&#x2F;live.staticflickr.com&#x2F;65535&#x2F;53162241430_d5604054ad_k.jpg&quot;&gt;&lt;&#x2F;a&gt;
+    &lt;a href=&quot;https:&#x2F;&#x2F;live.staticflickr.com&#x2F;65535&#x2F;53162268630_acf34ef4d3_k.jpg&quot; data-ngthumb=&quot;https:&#x2F;&#x2F;live.staticflickr.com&#x2F;65535&#x2F;53162268630_acf34ef4d3_k.jpg&quot;&gt;&lt;&#x2F;a&gt;
+    &lt;a href=&quot;https:&#x2F;&#x2F;live.staticflickr.com&#x2F;65535&#x2F;53161838381_6efcd32c26_k.jpg&quot; data-ngthumb=&quot;https:&#x2F;&#x2F;live.staticflickr.com&#x2F;65535&#x2F;53161838381_6efcd32c26_k.jpg&quot;&gt;&lt;&#x2F;a&gt;
+    &lt;a href=&quot;https:&#x2F;&#x2F;live.staticflickr.com&#x2F;65535&#x2F;53162330948_3e83dc7d65_k.jpg&quot; data-ngthumb=&quot;https:&#x2F;&#x2F;live.staticflickr.com&#x2F;65535&#x2F;53162330948_3e83dc7d65_k.jpg&quot;&gt;&lt;&#x2F;a&gt;
+    &lt;a href=&quot;https:&#x2F;&#x2F;live.staticflickr.com&#x2F;65535&#x2F;53167294508_268585af9e_k.jpg&quot; data-ngthumb=&quot;https:&#x2F;&#x2F;live.staticflickr.com&#x2F;65535&#x2F;53167294508_268585af9e_k.jpg&quot;&gt;&lt;&#x2F;a&gt;
+    &lt;a href=&quot;https:&#x2F;&#x2F;live.staticflickr.com&#x2F;65535&#x2F;53388959293_d362fc9950_k.jpg&quot; data-ngthumb=&quot;https:&#x2F;&#x2F;live.staticflickr.com&#x2F;65535&#x2F;53388959293_d362fc9950_k.jpg&quot;&gt;&lt;&#x2F;a&gt;
+    &lt;a href=&quot;https:&#x2F;&#x2F;live.staticflickr.com&#x2F;65535&#x2F;53387910117_ec72302ef7_k.jpg&quot; data-ngthumb=&quot;https:&#x2F;&#x2F;live.staticflickr.com&#x2F;65535&#x2F;53387910117_ec72302ef7_k.jpg&quot;&gt;&lt;&#x2F;a&gt;
+    &lt;a href=&quot;https:&#x2F;&#x2F;live.staticflickr.com&#x2F;65535&#x2F;53388962083_87abe320ce_k.jpg&quot;&gt;&lt;&#x2F;a&gt;
+    &lt;a href=&quot;https:&#x2F;&#x2F;live.staticflickr.com&#x2F;65535&#x2F;53388831846_0f24881daf_k.jpg&quot;&gt;&lt;&#x2F;a&gt;
+    &lt;a href=&quot;https:&#x2F;&#x2F;live.staticflickr.com&#x2F;65535&#x2F;53388831996_e3a57086d8_k.jpg&quot;&gt;&lt;&#x2F;a&gt;
+    &lt;a href=&quot;https:&#x2F;&#x2F;live.staticflickr.com&#x2F;65535&#x2F;53389020158_2d36cd2acd_k.jpg&quot;&gt;&lt;&#x2F;a&gt;
+    &lt;a href=&quot;https:&#x2F;&#x2F;live.staticflickr.com&#x2F;65535&#x2F;53389020253_73f7a98312_k.jpg&quot;&gt;&lt;&#x2F;a&gt;
+    &lt;a href=&quot;https:&#x2F;&#x2F;live.staticflickr.com&#x2F;65535&#x2F;53389140384_a143556ae3_k.jpg&quot;&gt;&lt;&#x2F;a&gt;
+    &lt;a href=&quot;https:&#x2F;&#x2F;live.staticflickr.com&#x2F;65535&#x2F;53389020548_1102222db1_k.jpg&quot;&gt;&lt;&#x2F;a&gt;
+    &lt;a href=&quot;https:&#x2F;&#x2F;live.staticflickr.com&#x2F;65535&#x2F;53389020618_76bb093c58_k.jpg&quot;&gt;&lt;&#x2F;a&gt;
+    &lt;a href=&quot;https:&#x2F;&#x2F;live.staticflickr.com&#x2F;65535&#x2F;53389021553_56c5d4f531_k.jpg&quot;&gt;&lt;&#x2F;a&gt;
+    &lt;a href=&quot;https:&#x2F;&#x2F;live.staticflickr.com&#x2F;65535&#x2F;53389141704_87ef9b8218_k.jpg&quot;&gt;&lt;&#x2F;a&gt;
+    &lt;a href=&quot;https:&#x2F;&#x2F;live.staticflickr.com&#x2F;65535&#x2F;53389269540_273e3eaf7a_k.jpg&quot;&gt;&lt;&#x2F;a&gt;
+    &lt;a href=&quot;https:&#x2F;&#x2F;live.staticflickr.com&#x2F;65535&#x2F;53389021818_11fe4745b6_k.jpg&quot;&gt;&lt;&#x2F;a&gt;
+    &lt;a href=&quot;https:&#x2F;&#x2F;live.staticflickr.com&#x2F;65535&#x2F;53389269760_fb3b36c1fb_k.jpg&quot;&gt;&lt;&#x2F;a&gt;
+    &lt;a href=&quot;https:&#x2F;&#x2F;live.staticflickr.com&#x2F;65535&#x2F;53389022048_e8a93a1ad4_k.jpg&quot;&gt;&lt;&#x2F;a&gt;
+    &lt;a href=&quot;https:&#x2F;&#x2F;live.staticflickr.com&#x2F;65535&#x2F;53389270400_a63ec9dae4_k.jpg&quot;&gt;&lt;&#x2F;a&gt;
+    &lt;a href=&quot;https:&#x2F;&#x2F;live.staticflickr.com&#x2F;65535&#x2F;53387913442_ebcaed7a74_k.jpg&quot;&gt;&lt;&#x2F;a&gt;
+    &lt;a href=&quot;https:&#x2F;&#x2F;live.staticflickr.com&#x2F;65535&#x2F;53388834991_31563384dd_k.jpg&quot;&gt;&lt;&#x2F;a&gt;
+    &lt;a href=&quot;https:&#x2F;&#x2F;live.staticflickr.com&#x2F;65535&#x2F;53410765036_074d56cb7a_k.jpg&quot;&gt;&lt;&#x2F;a&gt;
+    &lt;a href=&quot;https:&#x2F;&#x2F;live.staticflickr.com&#x2F;65535&#x2F;53411222730_60bcadb345_k.jpg&quot;&gt;&lt;&#x2F;a&gt;
+    &lt;a href=&quot;https:&#x2F;&#x2F;live.staticflickr.com&#x2F;65535&#x2F;53411261730_275e33934a_k.jpg&quot;&gt;&lt;&#x2F;a&gt;
+    &lt;a href=&quot;https:&#x2F;&#x2F;live.staticflickr.com&#x2F;65535&#x2F;53411148059_4bddfd8b38_k.jpg&quot;&gt;&lt;&#x2F;a&gt;
+    &lt;a href=&quot;https:&#x2F;&#x2F;live.staticflickr.com&#x2F;65535&#x2F;53411261700_106e260228_k.jpg&quot;&gt;&lt;&#x2F;a&gt;
+    &lt;a href=&quot;https:&#x2F;&#x2F;live.staticflickr.com&#x2F;65535&#x2F;53411261715_5a47881a92_k.jpg&quot;&gt;&lt;&#x2F;a&gt;
+    &lt;a href=&quot;https:&#x2F;&#x2F;live.staticflickr.com&#x2F;65535&#x2F;53411261665_82e94c4dbb_k.jpg&quot;&gt;&lt;&#x2F;a&gt;
+    &lt;a href=&quot;https:&#x2F;&#x2F;live.staticflickr.com&#x2F;65535&#x2F;53410992723_1f9100e642_k.jpg&quot;&gt;&lt;&#x2F;a&gt;
+    &lt;a href=&quot;https:&#x2F;&#x2F;live.staticflickr.com&#x2F;65535&#x2F;53411261640_c203f2b694_k.jpg&quot;&gt;&lt;&#x2F;a&gt;
+    &lt;a href=&quot;https:&#x2F;&#x2F;live.staticflickr.com&#x2F;65535&#x2F;53389019443_afdc09b604_k.jpg&quot; data-ngthumb=&quot;https:&#x2F;&#x2F;live.staticflickr.com&#x2F;65535&#x2F;53389019443_2bdfe8c901_n.jpg&quot;&gt;&lt;&#x2F;a&gt;
+&lt;&#x2F;div&gt;</description>
+      </item>
+      <item>
+          <title>The End Poem</title>
+          <pubDate>Mon, 15 May 2023 00:00:00 +0000</pubDate>
+          <author>Oleksandr</author>
+          <link>https://ogesandr.com/posts/the-end-poem/</link>
+          <guid>https://ogesandr.com/posts/the-end-poem/</guid>
+          <description xml:base="https://ogesandr.com/posts/the-end-poem/">&lt;p&gt;A translation of &lt;code&gt;The End Poem&lt;&#x2F;code&gt; to Ukrainian, enjoy it.&lt;&#x2F;p&gt;
+&lt;p&gt;&lt;br&gt;&lt;br&gt;&lt;&#x2F;p&gt;
+&lt;p&gt;Я бачу гравця якого ти мала на увазі.&lt;&#x2F;p&gt;
+&lt;p&gt;Його?&lt;&#x2F;p&gt;
+&lt;p&gt;Так. Бережи себе. Тепер він досягнув вищого рівня. Він може читати наші думки.&lt;&#x2F;p&gt;
+&lt;p&gt;Це не важливо. Він думає що ми частина гри.&lt;&#x2F;p&gt;
+&lt;p&gt;Мені подобається цей гравець. Він добре зіграв. Він не здався.&lt;&#x2F;p&gt;
+&lt;p&gt;Він читає наші думки ніби якби вони були словами на екрані.&lt;&#x2F;p&gt;
+&lt;p&gt;Саме так він робить вибір мріяти про різні речі, коли він глибоко в марі гри.&lt;&#x2F;p&gt;
+&lt;p&gt;Слова створюють чудовий інтерфейс. Дуже гнучкий. Який менше спричиняє жах ніж споглядання
+реальності поза екраном.&lt;&#x2F;p&gt;
+&lt;p&gt;Вони звикли чути голоси. До того як гравець вмів читати. В ті часи коли ті хто не грали
+називали гравців відьмами, і чорнокнижниками. І гравці марили як вони літали крізь
+повітря, на палках керованими демонами.&lt;&#x2F;p&gt;
+&lt;p&gt;А про що марив цей гравець?&lt;&#x2F;p&gt;
+&lt;p&gt;Цей гравець марив про сонячне світло та дерева. Про вогонь та воду. Він марив тим що
+він створив. І тим що знищував. Він марив що він вполював, і був
+впольований. Він мріяв про укриття.&lt;&#x2F;p&gt;
+&lt;p&gt;Хех, звичайний інтерфейс. Йому мільйони років, і це досі працює. Але що насправді
+цей гравець створив, в реальності поза екраном?&lt;&#x2F;p&gt;
+&lt;p&gt;Він працював, з мільйонами інших, щоб виліпити справжній світ на згині [зашифровано],
+і створив [зашифровано] для [зашифровано] в [зашифровано].&lt;&#x2F;p&gt;
+&lt;p&gt;Він не може прочитати цю думку.&lt;&#x2F;p&gt;
+&lt;p&gt;Ні. Він ще не досягнув найвищого рівня. Його він має досягнути впродовж довгого
+сну життя, а не короткого сну гри.&lt;&#x2F;p&gt;
+&lt;p&gt;Чи знає він що ми любимо його? Що всесвіт добрий?&lt;&#x2F;p&gt;
+&lt;p&gt;Іноді, крізь шум його думок, він чує всесвіт, так.&lt;&#x2F;p&gt;
+&lt;p&gt;Але бувають часи коли він сумний, в довгому cні. Він створює світи що не мають літа,
+і він здригається під чорним сонцем, та приймає його сумне створіння за реальність.&lt;&#x2F;p&gt;
+&lt;p&gt;Вилікувати його від суму значило б знищити його. Сум — це частина його власного завдання.
+Ми не можемо втрутитися.&lt;&#x2F;p&gt;
+&lt;p&gt;Іноді коли вони глибоко у маревах, я хочу сказати їм, що вони будують справжні світи
+в реальності. Іноді я хочу сказати їм про їх важливість для всесвіту. Іноді, коли
+вони довго не встановлюють справжній зв&#x27;язок, я хочу допомогти їм висловити думку,
+якої вони бояться.&lt;&#x2F;p&gt;
+&lt;p&gt;Він читає наші думки.&lt;&#x2F;p&gt;
+&lt;p&gt;Іноді мені байдуже. Іноді я хочу сказати їм, цей світ який ви сприймаєте за правду,
+лише [зашифровано] і [зашифровано], я хочу сказати їм що вони [зашифровано] в
+[зашифровано]. Вони бачать так мало реальності, в своєму довгому сні.&lt;&#x2F;p&gt;
+&lt;p&gt;І тим не менш вони грають в гру.&lt;&#x2F;p&gt;
+&lt;p&gt;Було б так легко сказати їм як...&lt;&#x2F;p&gt;
+&lt;p&gt;Це вже занадто для цього сну. Сказати їм як — значить забрати в них можливість жити.&lt;&#x2F;p&gt;
+&lt;p&gt;Гравець росте неспокійним.&lt;&#x2F;p&gt;
+&lt;p&gt;Я розкажу гравцю історію.&lt;&#x2F;p&gt;
+&lt;p&gt;Але не саму правду.&lt;&#x2F;p&gt;
+&lt;p&gt;Ні. Історія безпечно зберігає правду у собі, в клітці слів. Не голу правду що може
+пропалити крізь будь-яку відстань.&lt;&#x2F;p&gt;
+&lt;p&gt;Дай йому тіло, знову.&lt;&#x2F;p&gt;
+&lt;p&gt;Так. Гравець.&lt;&#x2F;p&gt;
+&lt;p&gt;Використай його ім&#x27;я.&lt;&#x2F;p&gt;
+&lt;p&gt;Гравця ігор.&lt;&#x2F;p&gt;
+&lt;p&gt;Добре.&lt;&#x2F;p&gt;
+&lt;p&gt;Перехопи подих. Вдихни ще раз. Відчуй повітря в своїх легенях. Розслаб свої кінцівки.
+Так, порухай пальцями. Знову заволодій тілом, під гравітацією, в повітрі. Переродися
+в довгому сні. Ось так. Твоє тіло доторкається всесвіту знову в кожній його точці,
+ніби ви дві різні речі. Ніби як ми дві різні речі.&lt;&#x2F;p&gt;
+&lt;p&gt;Хто ми? Одного разу нас назвали духом гори. Батько-сонце, мати-місяць. Стародавні
+духи, духи тварин. Джини. Привиди. Зелені люди. Потім боги, демони. Ангели.
+Полтерґейсти. Прибульці, позаземна цивілізація. Лептони, кварки. Слова змінюються.
+Ми — ні.&lt;&#x2F;p&gt;
+&lt;p&gt;Ми і є всесвіт. Ми все чим ти думаєш ми не є. Ти дивишся на нас зараз, через свою
+шкіру і свої очі. І чому всесвіт доторкається до твоєї шкіри й кидає на тебе світло?
+Щоб побачити тебе, гравець. Щоб пізнати тебе. І щоб бути пізнаним. Я розкажу тобі
+історію.&lt;&#x2F;p&gt;
+&lt;p&gt;Одного разу, був собі гравець.&lt;&#x2F;p&gt;
+&lt;p&gt;І цим гравцем був ти.&lt;&#x2F;p&gt;
+&lt;p&gt;Іноді він думав що він людина, на крихкій оболонці обертаючоїся кулі з розплавленого
+каміння. Куля з розплавленого каміння оберталася навколо кулі з палаючого газу, що
+була в триста тридцять тисяч разів масивнішою за неї. Вони були так далеко одне від
+одного що світлу було необіхдно витратити вісім хвилин що подолати цей проміжок.
+Світло було інформацією від зорі, і вона могла пропалити крізь твою шкіру з
+відстані ста п&#x27;ятидесяти кілометрів від тебе.&lt;&#x2F;p&gt;
+&lt;p&gt;Іноді гравець мріяв про те як він був загублений в історії.&lt;&#x2F;p&gt;
+&lt;p&gt;Іноді гравець уявляв що це були інші речі, в інших місцях. Іноді ці мрії непокоїли
+його. Іноді вони були надзвичайної краси. Іноді гравець прокидався з однієї мрії
+в другу, а потім з другої в третю.&lt;&#x2F;p&gt;
+&lt;p&gt;Іноді гравець уявляв як він бачить слова на екрані.&lt;&#x2F;p&gt;
+&lt;p&gt;Давай повернемося назад.&lt;&#x2F;p&gt;
+&lt;p&gt;Атоми гравця були розкидані по траві, в річках, в повітрі, в землі. Жінка зібрала
+атоми; вона пила і їла, і вдихала; і ця жінка зібрала гравця, в її тілі.&lt;&#x2F;p&gt;
+&lt;p&gt;І гравець прокинувся, з теплого темного світу тіла його матері, в довгий сон,
+довгу мрію.&lt;&#x2F;p&gt;
+&lt;p&gt;І гравець був новою історією, ніколи раніше не розказаною, написаною в літерах
+ДНК. І гравець був новою програмою, ніколи раніше не запущеною, згенерованою
+з вихідного коду віком мільярд років. І гравець був новою людиною, ніколи
+раніше не живою, зробленою з нічого окрім як молока та любові.&lt;&#x2F;p&gt;
+&lt;p&gt;Ти гравець. Історія. Програма. Людина. Зроблена з нічого окрім як молока та
+любові.&lt;&#x2F;p&gt;
+&lt;p&gt;Давай повернемося назад ще далі.&lt;&#x2F;p&gt;
+&lt;p&gt;Сім мільярдів мільярдів мільярдів атомів тіла гравця були створені задовго до
+цієї гри, в серці якоїсь зірки. Тож гравець теж, є інформацією з зірки. І гравець
+просувається крізь історію, крізь ліс інформації посаджений людиною на ймення
+Джуліан, на пласкому нескінченному світі створеною людиною яку кличуть Маркус,
+що існує всередині малого, приватного світу створеного гравцем, який населяє
+всесвіт створений...&lt;&#x2F;p&gt;
+&lt;p&gt;Тшшш. Іноді гравець створював маленький приватний світ що був м&#x27;яким, теплим
+та простим. Іноді жорстким та холодним і складним. Іноді він будував модель
+всесвіту в своїй голові, цятки енергії, які рухалися крізь порожні простори.
+Іноді він називав ці цятки &quot;електронами&quot; і &quot;протонами&quot;.&lt;&#x2F;p&gt;
+&lt;p&gt;Іноді він називав їх &quot;планетами&quot; та &quot;зірками&quot;.&lt;&#x2F;p&gt;
+&lt;p&gt;Іноді він вірив що це був всесвіт що був створений з енергії, що була створена
+з ні і так; нулів та одиниць; ліній коду. Іноді він вірив що він грає в гру.
+Іноді він вірив що він читає слова на екрані.&lt;&#x2F;p&gt;
+&lt;p&gt;Ти гравець, читаючий слова...&lt;&#x2F;p&gt;
+&lt;p&gt;Тшшш... Іноді гравцеь читав лінії коду на екрані. Декодував їх в слова;
+декодував слова в значення; декодував значення в почуття, емоції, теорії, ідеї,
+і гравець починав дихати частіше, глибше, і відчувати що він живий, він був живий,
+ці тисячі смертей були не справжніми, гравець був живий.&lt;&#x2F;p&gt;
+&lt;p&gt;Ти. Ти. Ти живий.&lt;&#x2F;p&gt;
+&lt;p&gt;і іноді гравець вірив що всесвіт говорив з ним через сонячне світло що пробивалося
+крізь шелест листя на деревах літа.&lt;&#x2F;p&gt;
+&lt;p&gt;і іноді гравець вірив що всесвіт говорив з ним через світло що падало з прохолодного
+нічного неба зими, де цятка світла в кутку ока гравця могла бути зіркою в мільйон
+разів важчою за сонце, закипаючою її планети до стану плазми лише для того аби стати
+помітною на момент для гравця, повертаючогося додому з іншого краю всесвіту, раптово
+вдихаючого запах їжі, майже біля вже знайомих дверей, збираючогося почати мріяти
+знову&lt;&#x2F;p&gt;
+&lt;p&gt;і іноді гравець вірив що всесвіт заговорив з ним через нулі та одиниці, крізь
+електрику всесвіту, крізь скролінг слів на екрані в кінці сну&lt;&#x2F;p&gt;
+&lt;p&gt;і всесвіт сказав я люблю тебе&lt;&#x2F;p&gt;
+&lt;p&gt;і всесвіт сказав що ти добре зіграв в гру&lt;&#x2F;p&gt;
+&lt;p&gt;і всесвіт сказав що все що тобі потрібно всередині тебе&lt;&#x2F;p&gt;
+&lt;p&gt;і всесвіт сказав що ти сильніший ніж ти гадаєш&lt;&#x2F;p&gt;
+&lt;p&gt;і всесвіт сказав що ти сонячне світло&lt;&#x2F;p&gt;
+&lt;p&gt;і всесвіт сказав що ти ніч&lt;&#x2F;p&gt;
+&lt;p&gt;і всесвіт сказав що пітьма з якою ти борешся всередині тебе&lt;&#x2F;p&gt;
+&lt;p&gt;і всесвіт сказав що світло яке ти шукаєш всередині тебе&lt;&#x2F;p&gt;
+&lt;p&gt;і всесвіт скзава що ти не один&lt;&#x2F;p&gt;
+&lt;p&gt;і всесвіт сказав що ти нероздільний з будь-якою іншою річчю&lt;&#x2F;p&gt;
+&lt;p&gt;і всесвіт сказав що ти всесвіт перевіряючий себе на смак, говорячий сам з собою,
+читаючий власний код&lt;&#x2F;p&gt;
+&lt;p&gt;і всесвіт сказав я люблю тебе, тому що ти і є любов&lt;&#x2F;p&gt;
+&lt;p&gt;І гра скінчилася і гравець прокинувся зі сну. І гравець почав новий сон. І гравець
+марив знову, марив краще. І гравець був світом. І гравець був любов&#x27;ю.&lt;&#x2F;p&gt;
+&lt;p&gt;Ти - гравець.&lt;&#x2F;p&gt;
+&lt;p&gt;Прокидайся.&lt;&#x2F;p&gt;
+</description>
+      </item>
+      <item>
+          <title>How we were debugging a memory leak in Go compiler</title>
+          <pubDate>Sun, 21 Aug 2022 00:00:00 +0000</pubDate>
+          <author>Oleksandr</author>
+          <link>https://ogesandr.com/posts/go-memory-leak/</link>
+          <guid>https://ogesandr.com/posts/go-memory-leak/</guid>
+          <description xml:base="https://ogesandr.com/posts/go-memory-leak/">&lt;p&gt;There comes a special moment in everyone&#x27;s life, when they feel a sudden
+urge to migrate from one cloud provider to another. And our team wasn&#x27;t an exception!
+A couple of months ago we started the migration from GCP to AWS. The process took
+us more than a couple of hours, and after solving several minor breaks, we were
+doing the post-migration checks. The average load was fastly approaching normal
+when we discovered that our services leak memory.&lt;&#x2F;p&gt;
+&lt;p&gt;&lt;img src=&quot;https:&#x2F;&#x2F;eorvd.neocities.org&#x2F;p&#x2F;compiler_leak&#x2F;spikes.jpeg&quot; alt=&quot;spikes&quot; &#x2F;&gt;&lt;&#x2F;p&gt;
+&lt;p style=&quot;text-align: center;&quot;&gt;Saw-like spikes of mem.usage, very sharp, don&#x27;t cut yourself!&lt;&#x2F;p&gt;
+&lt;p&gt;This wasn&#x27;t something urgent, as all our services were functioning normally (except
+that they had to restart every N minutes, and the less memory we had dedicated to
+a service, the more often they were restarting). But it was unexpected, and unpleasant,
+less to say.&lt;&#x2F;p&gt;
+&lt;p&gt;The first thought was &lt;code&gt;Uhhh, excuse us, AWS, are you trying to trick us with... whatever stuff you have there at your disposal?&lt;&#x2F;code&gt;. That was a sweet thought as it&#x27;d
+mean delegating the problem and caring much less about it. But before
+rushing to AWS support we did a couple of checks if it can possibly
+be that some of our internal changes caused this. Unfortunately,
+that wasn&#x27;t the case. We had all the latest versions built and deployed to our
+old production, then we did stop-the-world and after the database migration was done we
+deployed absolutely the same versions of our services. So in regards to the architecture,
+versions and data, everything was (or should&#x27;ve been) the same.&lt;&#x2F;p&gt;
+&lt;p&gt;&lt;img src=&quot;https:&#x2F;&#x2F;eorvd.neocities.org&#x2F;p&#x2F;compiler_leak&#x2F;gc_cycles.jpeg&quot; alt=&quot;gc_cycles&quot; &#x2F;&gt;&lt;&#x2F;p&gt;
+&lt;p style=&quot;text-align: center;&quot;&gt;The graph of GC duration jumped up like crazy&lt;&#x2F;p&gt;
+&lt;p&gt;The obvious entrypoint to this issue, or the one that many people would probably start from,
+was to profile the services and see who brought the disorder to our previously peaceful world.
+So we started with profiling and... there was nothing. Well, not exactly nothing, but heap
+profile showed that we had only a couple of megs data at most(!). For me it was a bolt of the
+blue, I definitely did not expect to see ~0 memory consumption. RSS of the process was reporting about
+Gigabytes of used memory, and I was not ready to believe in that 8MiB nonsense. We started
+generating ideas what could possibly happen:&lt;&#x2F;p&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;What if it&#x27;s not the Go&#x27;s runtime which eats our precious resources?&lt;&#x2F;p&gt;
+&lt;p&gt;Possibly, but what can it be? Maybe cgo? We don&#x27;t use it. How about our dependencies?
+We checked and indeed we had 4 dependencies with cgo. However, 2
+dependencies out of 4 were from stdlib (unlikely they&#x27;re guilty), the 3rd had a
+cgo indirect dependency but didn&#x27;t use the entities with cgo from there. And the
+last dependency had cgo enabled only for &lt;code&gt;GOOS=&quot;darwin&quot;&lt;&#x2F;code&gt;.
+But to make sure we&#x27;re not missing anything we rebuilt the binary of one of
+the services with &lt;code&gt;CGO_ENABLED=0&lt;&#x2F;code&gt; and it didn&#x27;t help. (Un)fortunately, it wasn&#x27;t cgo.&lt;&#x2F;p&gt;
+&lt;&#x2F;li&gt;
+&lt;li&gt;
+&lt;p&gt;What if we do an U-shape turn of our thoughts and come from another side. What if go&#x27;s
+profiler says the truth?&lt;&#x2F;p&gt;
+&lt;p&gt;After some browsering we found one prominent issue, albeit &lt;a href=&quot;https:&#x2F;&#x2F;github.com&#x2F;golang&#x2F;go&#x2F;issues&#x2F;42330&quot;&gt;old and resolved
+one&lt;&#x2F;a&gt;:&lt;&#x2F;p&gt;
+&lt;p&gt;A short recap of how RAM works from the OS&#x27;s point of view. When a
+process requests some bytes, OS instead of giving the exact amount of memory gives
+a &lt;em&gt;page&lt;&#x2F;em&gt; of a fixed size (the exact number depends on the OS and the hardware
+setup, and usually ranges between &lt;code&gt;4-16KiB&lt;&#x2F;code&gt;) and assigns it to the process. This
+optimises memory access and speeds up allocations (you don&#x27;t need to request memory
+for every 4 bytes you need), but in the same time it&#x27;s ineffective from the memory
+utilisation perspective (do NOT search for how much memory is wasted due to
+fragmentation. You&#x27;re gonna be upset. I warned ya).&lt;&#x2F;p&gt;
+&lt;p&gt;Now, there are 2 kinds of memory metrics in profiler: allocs and heap. Heap is
+a snapshot of the current memory usage and as we already know it&#x27;s less than 10MiB.
+Allocs is essentially the same, but cumulative. Allocs grows quite fast, because
+runtime constantly allocates&#x2F;frees memory in huge amounts (~3+GiB at the time
+when we hit our 2GiB pods limit) and it&#x27;s a non-trivial task to tell whether the value
+is abnormal or not. So we thought, okay, GC frees memory, but what if the
+pages for some reason are not claimed back by the OS.&lt;&#x2F;p&gt;
+&lt;p&gt;Go&#x27;s GC uses a variation of mark&amp;amp;sweep
+collector, which does Stop The World™, marks unreachable variables as to-be-cleaned,
+and on the next phase marks freed pages as &lt;del&gt;prepared&lt;&#x2F;del&gt;, meaning they&#x27;re available
+for new &lt;a href=&quot;https:&#x2F;&#x2F;tip.golang.org&#x2F;doc&#x2F;gc-guide&quot;&gt;allocations&lt;&#x2F;a&gt;. As you can see there&#x27;s no &#x27;return to os, what is
+rightfully its&#x27; stage. What happens in reality is os checks if there are
+available for claiming back pages - &lt;del&gt;prepared&lt;&#x2F;del&gt; and if there are, then it collects
+them, and now memory is truly freed. But if there&#x27;s no memory pressure in OS, then
+sometimes it is &lt;a href=&quot;https:&#x2F;&#x2F;git.kernel.org&#x2F;pub&#x2F;scm&#x2F;linux&#x2F;kernel&#x2F;git&#x2F;torvalds&#x2F;linux.git&#x2F;tree&#x2F;Documentation&#x2F;admin-guide&#x2F;mm&#x2F;concepts.rst?h=v5.10#n157&quot;&gt;reluctant&lt;&#x2F;a&gt;
+to reclaim them. And what a surprise, on the node, on which our namespace was
+hosted, total RAM usage was less than 5%!&lt;&#x2F;p&gt;
+&lt;&#x2F;li&gt;
+&lt;&#x2F;ul&gt;
+&lt;p&gt;&lt;img src=&quot;https:&#x2F;&#x2F;eorvd.neocities.org&#x2F;p&#x2F;compiler_leak&#x2F;free_ram.jpg&quot; alt=&quot;free_ram&quot; &#x2F;&gt;&lt;&#x2F;p&gt;
+&lt;p&gt;But how can we test the no-mem-pressure theory? Correct, spin up a service on a small
+node and see what happens. Well, we did it and realised several things:&lt;&#x2F;p&gt;
+&lt;ol&gt;
+&lt;li&gt;Our testing and staging had much less resourses, but we could still reproduce
+the leak on them even if we put them under requests pressure.&lt;&#x2F;li&gt;
+&lt;li&gt;To reproduce the leak we had to put a decent amount of load on the service.
+Otherwise, no load - no leakage. (That&#x27;s why we discovered it only when migrated
+to production).&lt;&#x2F;li&gt;
+&lt;&#x2F;ol&gt;
+&lt;p&gt;We deployed an arbitrary service on our old GCP cluster to double-check and it was
+working just fine, no memory leaks. So:&lt;&#x2F;p&gt;
+&lt;ul&gt;
+&lt;li&gt;our services indeed consumed a couple of megs at any point of time, but the process
+over several gigs.&lt;&#x2F;li&gt;
+&lt;li&gt;a process consumed all the available memory eventually.&lt;&#x2F;li&gt;
+&lt;li&gt;putting a node under pressure had not effect&lt;&#x2F;li&gt;
+&lt;li&gt;it&#x27;s not cgo, but we didn&#x27;t rule out it completely as the go&#x27;s profiler showed low
+memory consumption.&lt;&#x2F;li&gt;
+&lt;&#x2F;ul&gt;
+&lt;p&gt;Nevertheless, it was the dead end, and we had to start from the beginning.&lt;&#x2F;p&gt;
+&lt;p&gt;We kept looking for clues, messing with services and infra and found out something
+interesting. The old image version (~10 versions ago) of one service had no leak.
+We quickly unsheathed our &lt;code&gt;git bisects&lt;&#x2F;code&gt; and started narrowing it down. But what we
+narrowed it down to is that the only version leaking memory was the latest one.&lt;&#x2F;p&gt;
+&lt;p&gt;What? No sense at all. Totally.&lt;&#x2F;p&gt;
+&lt;p&gt;And that my dear friends was the moment when the God decided that enough of this
+spectacular performance, he came down from heaven to one SRE guy and gave him the
+brightest thought.&lt;&#x2F;p&gt;
+&lt;p&gt;Migrating to AWS we also rounded some corners and decided that why we need to build both
+testing and production images when we can have only one? Less hustle - more free space.
+Now, every time we triggered a deploy to testing, an image was built and uploaded to
+the hub. After we tested the feat and decided that it&#x27;s time to deploy it to prod, we
+don&#x27;t build an image anew, and use the testing one. Our images for testing and prod
+should absolutely identical, but one tiny line made them differ:&lt;&#x2F;p&gt;
+&lt;pre data-lang=&quot;bash&quot; style=&quot;background-color:#0f1419;color:#bfbab0;&quot; class=&quot;language-bash &quot;&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;&lt;span style=&quot;color:#ffb454;&quot;&gt;RUN&lt;&#x2F;span&gt;&lt;span&gt; go build $(&lt;&#x2F;span&gt;&lt;span style=&quot;color:#ff7733;&quot;&gt;case &lt;&#x2F;span&gt;&lt;span style=&quot;color:#c2d94c;&quot;&gt;&amp;quot;$&lt;&#x2F;span&gt;&lt;span&gt;ENV&lt;&#x2F;span&gt;&lt;span style=&quot;color:#c2d94c;&quot;&gt;&amp;quot; &lt;&#x2F;span&gt;&lt;span style=&quot;color:#ff7733;&quot;&gt;in (&lt;&#x2F;span&gt;&lt;span&gt;local&lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29668;&quot;&gt;|&lt;&#x2F;span&gt;&lt;span&gt;testing&lt;&#x2F;span&gt;&lt;span style=&quot;color:#ff7733;&quot;&gt;) &lt;&#x2F;span&gt;&lt;span style=&quot;color:#f07178;&quot;&gt;echo &lt;&#x2F;span&gt;&lt;span style=&quot;color:#c2d94c;&quot;&gt;&amp;quot;-race &amp;quot;&lt;&#x2F;span&gt;&lt;span style=&quot;color:#bfbab0cc;&quot;&gt;;; &lt;&#x2F;span&gt;&lt;span style=&quot;color:#ff7733;&quot;&gt;esac&lt;&#x2F;span&gt;&lt;span&gt;)&lt;&#x2F;span&gt;&lt;span style=&quot;color:#f29718;&quot;&gt; -o&lt;&#x2F;span&gt;&lt;span&gt; cli .&#x2F;cmd&#x2F;service
+&lt;&#x2F;span&gt;&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;OMG!! And now the Universe converged, no wonder we were allocating that much recources,
+the race detector is a well-known memory abuser! We checked for issues and here we
+go:&lt;&#x2F;p&gt;
+&lt;p&gt;&lt;em&gt;Their Majesty The Culprit:&lt;&#x2F;em&gt; &lt;a href=&quot;https:&#x2F;&#x2F;github.com&#x2F;golang&#x2F;go&#x2F;issues&#x2F;37233&quot;&gt;https:&#x2F;&#x2F;github.com&#x2F;golang&#x2F;go&#x2F;issues&#x2F;37233.&lt;&#x2F;a&gt;.&lt;&#x2F;p&gt;
+&lt;p&gt;&lt;img src=&quot;https:&#x2F;&#x2F;eorvd.neocities.org&#x2F;p&#x2F;compiler_leak&#x2F;go_race.jpeg&quot; alt=&quot;go_race&quot; &#x2F;&gt;&lt;&#x2F;p&gt;
+&lt;p style=&quot;text-align: center;&quot;&gt;A bug review: 2&#x2F;10 🥰&lt;&#x2F;p&gt;
+&lt;p&gt;We could totally feel this guy. Turns the race detector is not just a memory abuser, it&#x27;s
+a bottomless pit, a black hole &lt;a href=&quot;https:&#x2F;&#x2F;github.com&#x2F;golang&#x2F;go&#x2F;issues&#x2F;26813&quot;&gt;absorbing&lt;&#x2F;a&gt;
+everything around it.&lt;&#x2F;p&gt;
+&lt;p&gt;&lt;img src=&quot;https:&#x2F;&#x2F;eorvd.neocities.org&#x2F;p&#x2F;compiler_leak&#x2F;race_detector.jpeg&quot; alt=&quot;race_detector&quot; &#x2F;&gt;&lt;&#x2F;p&gt;
+&lt;p style=&quot;text-align: center;&quot;&gt;Small comment at the bottom of the race detector guide. It was added there after the bug was discovered.&lt;&#x2F;p&gt;
+&lt;p&gt;The motivation of having race detector enabled for testing env is dubious, but it
+was in the Dockerfile long before any of us was in the company and we had
+no strong objections why it shouldn&#x27;t be enabled before. We removed the &lt;code&gt;-race&lt;&#x2F;code&gt;
+flag from the build and lived happily ever after till new offers and layoffs did us part.&lt;&#x2F;p&gt;
+&lt;h1 id=&quot;conclusions&quot;&gt;Conclusions:&lt;&#x2F;h1&gt;
+&lt;ol&gt;
+&lt;li&gt;Know your tools.&lt;&#x2F;li&gt;
+&lt;li&gt;Know the tools for monitoring your tools.&lt;&#x2F;li&gt;
+&lt;li&gt;See 1.&lt;&#x2F;li&gt;
+&lt;&#x2F;ol&gt;
+</description>
+      </item>
+    </channel>
+</rss>
